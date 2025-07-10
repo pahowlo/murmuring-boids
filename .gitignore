@@ -1,0 +1,42 @@
+# System
+.DS_Store
+.DS_Store
+.DS_Store?
+.idea/
+.vscode/
+*.swo
+*.swp
+Thumbs.db
+
+# Local environment
+.env
+.env.*.local
+.env.local
+.envrc
+*.log
+*.temp
+*.tmp
+logs/
+
+# Javascript/Typescripts
+.npm
+npm-debug.log*
+node_modules/
+
+# Build files
+.eggs/
+*.a
+*.dll
+*.dylib
+*.egg-info/
+*.exe
+*.lib
+*.so
+build/
+dist/
+target/
+
+# Backup files
+*.bak
+*.backup
+*.old
