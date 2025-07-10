@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    // Generate type definitions
+    "declaration": true,
+    // Strict type checking
+    "strict": true,
+    // Don't check third-party libraries
+    "skipLibCheck": true
+  },
+
+  // Files to compile
+  "include": ["src", "src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+}
