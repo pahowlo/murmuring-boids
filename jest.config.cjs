@@ -6,7 +6,7 @@ module.exports = {
   testEnvironment: "jsdom",
 
   roots: ["<rootDir>/src"],
-  testMatch: ["**/?(*.)+test.ts"],
+  testMatch: ["**/*.test.ts"],
 
   // How to transform files before testing (using ts-jest to compile TypeScript)
   transform: {

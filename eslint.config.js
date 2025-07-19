@@ -20,7 +20,10 @@ export default [
 
       // WARNING
       // Enforce explicit return types for functions - not for arrow expressions
-      "@typescript-eslint/explicit-function-return-type": ["warn", { allowExpressions: true }],
+      "@typescript-eslint/explicit-function-return-type": [
+        "warn",
+        { allowExpressions: true },
+      ],
       // Highlight console.log in production code
       "no-console": "warn",
     },
