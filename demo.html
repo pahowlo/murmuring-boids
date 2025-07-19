@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Murmuring Boids Background</title>
+  </head>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    body, #canvas {
+      display: block;
+      overflow: hidden;
+    }
+  </style>
+  <body>
+    <canvas id="canvas"></canvas>
+    <script type="module">
+      import { MurmuringBoidsBackground } from "/src/index.js"
+
+      // Define top-left and bottom-right as percentages (0-1)
+      const topLeft = { x: 0, y: 0}
+      const bottomRight = { x: 1, y: 1 }
+
+      const canvas = document.getElementById('canvas');
+
+      const background = new MurmuringBoidsBackground(window, canvas, {
+        topLeft: topLeft,
+        bottomRight: bottomRight
+      }, {
+      })
+      background.start(100)
+    </script>
+  </body>
+</html>
