@@ -2,12 +2,7 @@ import { vec3 } from "gl-matrix"
 
 export interface BoidConfig {
   maxSpeed: number
-}
-
-export interface BoidState {
-  position: vec3
-  velocity: vec3
-  acceleration: vec3
+  turnBackFactor: number
 }
 
 export interface PercentPoint {
