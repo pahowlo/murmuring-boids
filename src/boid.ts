@@ -1,32 +1,60 @@
-import { vec3 } from "gl-matrix"
-import { BoidConfig, BoidState, RenderContext } from "./types"
+import { vec3, vec2 } from "gl-matrix"
+
+import { limitTurn } from "./utilities/constraints"
+import { isInPolygon } from "./utilities/rayCasting2D"
+import { BoidConfig, RenderContext } from "./types"
+
+const defaultConfig: BoidConfig = {
+  maxSpeed: 2,
+  turnBackFactor: 0.5,
+}
 
 export class Boid {
-  private state: BoidState
+  private position: vec3
+  private velocity: vec3
+  private acceleration: vec3
+
   private config: BoidConfig
+  private desiredDirection: vec3 | null = null
 
-  constructor(position: vec3, config: BoidConfig) {
-    this.config = config
-
-    const theta = Math.random() * 2 * Math.PI
-    this.state = {
-      position: position,
-      velocity: vec3.fromValues(Math.cos(theta) * this.config.maxSpeed, Math.sin(theta) * this.config.maxSpeed, 0),
-      acceleration: vec3.create(),
+  constructor(position: vec3, config: Partial<BoidConfig> = {}) {
+    this.config = {
+      ...config,
+      ...defaultConfig,
     }
 
+    const theta = Math.random() * 2 * Math.PI
+    this.position = position
+    this.velocity = vec3.fromValues(Math.cos(theta) * this.config.maxSpeed, Math.sin(theta) * this.config.maxSpeed, 0)
+    this.acceleration = vec3.create()
   }
 
-  get position(): vec3 {
-    return vec3.clone(this.state.position)
-  }
+  update(neighbors: Boid[], flightZone: vec2[], flightZoneCenter: vec3): void {
+    // Simple boundary check
+    if (isInPolygon(this.position, flightZone) || this.desiredDirection) {
+      this.acceleration = vec3.create() // Reset acceleration if inside the flight zone
+      this.desiredDirection = null
+    } else {
+      this.desiredDirection = vec3.subtract(vec3.create(), flightZoneCenter, this.position)
+      vec3.normalize(this.desiredDirection, this.desiredDirection)
+    }
 
-  get velocity(): vec3 {
-    return vec3.clone(this.state.velocity)
-  }
+    if (this.desiredDirection) {
+      const steering = limitTurn(this.velocity, this.desiredDirection, 180)
+      vec3.normalize(steering, steering)
+      vec3.scale(steering, steering, this.config.turnBackFactor)
 
-  update(neighbors: Boid[]): void {
-    this.state.position = vec3.add(this.state.position, this.state.position, this.state.velocity)
+      vec3.add(this.acceleration, this.acceleration, steering)
+    }
+
+    // Update velocity
+    vec3.add(this.velocity, this.velocity, this.acceleration)
+    if (vec3.length(this.velocity) > this.config.maxSpeed) {
+      vec3.normalize(this.velocity, this.velocity)
+      vec3.scale(this.velocity, this.velocity, this.config.maxSpeed + 1)
+    }
+    // Update position
+    this.position = vec3.add(this.position, this.position, this.velocity)
   }
 
   render(context: RenderContext): void {

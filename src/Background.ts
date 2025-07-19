@@ -1,23 +1,23 @@
-import { vec3 } from "gl-matrix"
+import { vec3, vec2 } from "gl-matrix"
 
-import { BoidConfig, CanvasConfig, RenderContext } from "./types"
+import { CanvasConfig, RenderContext } from "./types"
 import { Boid } from "./boid"
 
 export class MurmuringBoidsBackground {
   private renderContext: RenderContext
+
   private animationId: number | null = null
   private isRunning = false
+
   private boids: Boid[] = []
+  private flightZone: vec2[]
+  private flightZoneCenter: vec3
 
   constructor(window: Window, canvas: HTMLCanvasElement, canvasConfig: CanvasConfig, renderOptions = {}) {
     const ctx = canvas.getContext("2d")
     if (!ctx) throw new Error("Canvas context not available")
 
     this.renderContext = { canvas, ctx }
-
-    const defaultConfig: BoidConfig = {
-      maxSpeed: 2,
-    }
 
     const defaultRenderOptions = {
       size: 6,
@@ -30,10 +30,39 @@ export class MurmuringBoidsBackground {
     }
 
     const screen = {
-      width: 0,
-      height: 0,
+      width: window.screen.width,
+      height: window.screen.height,
       devicePixelRatio: 0,
     }
+
+    this.flightZone = [
+      vec2.fromValues(
+        // left-top
+        screen.width * (canvasConfig.topLeft.x + 0.2),
+        screen.height * (canvasConfig.topLeft.y + 0.2),
+      ),
+      vec2.fromValues(
+        // right-top
+        screen.width * (canvasConfig.bottomRight.x - 0.2),
+        screen.height * (canvasConfig.topLeft.y + 0.2),
+      ),
+      vec2.fromValues(
+        // right-bottom
+        screen.width * (canvasConfig.bottomRight.x - 0.2),
+        screen.height * (canvasConfig.bottomRight.y - 0.3),
+      ),
+      vec2.fromValues(
+        // left-bottom
+        screen.width * (canvasConfig.topLeft.x + 0.2),
+        screen.height * (canvasConfig.bottomRight.y - 0.3),
+      ),
+    ]
+
+    this.flightZoneCenter = vec3.fromValues(
+      this.flightZone.reduce((sum, v) => sum + v[0], 0) / this.flightZone.length,
+      this.flightZone.reduce((sum, v) => sum + v[1], 0) / this.flightZone.length,
+      0,
+    )
 
     function resizeCanvas() {
       if (
@@ -99,7 +128,7 @@ export class MurmuringBoidsBackground {
     if (!this.isRunning) return
 
     this.boids.forEach((boid) => {
-      boid.update(this.boids)
+      boid.update(this.boids, this.flightZone, this.flightZoneCenter)
     })
     this.render()
 
@@ -110,8 +139,30 @@ export class MurmuringBoidsBackground {
     const { ctx, canvas } = this.renderContext
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
+    this.renderFlightZone()
     this.boids.forEach((boid) => {
       boid.render(this.renderContext)
     })
+  }
+
+  renderFlightZone(): void {
+    const { ctx } = this.renderContext
+    ctx.save()
+    ctx.strokeStyle = "#00ff00" // or any color you like
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(this.flightZone[0][0], this.flightZone[0][1])
+    for (let i = 1; i < this.flightZone.length; i++) {
+      ctx.lineTo(this.flightZone[i][0], this.flightZone[i][1])
+    }
+    ctx.closePath()
+    ctx.stroke()
+
+    ctx.fillStyle = "#00ff00" // center color
+    ctx.beginPath()
+    ctx.arc(this.flightZoneCenter[0], this.flightZoneCenter[1], 2, 0, 2 * Math.PI)
+    ctx.fill()
+
+    ctx.restore()
   }
 }
