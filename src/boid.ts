@@ -6,7 +6,10 @@ import { BoidConfig, RenderContext } from "./types"
 
 const defaultConfig: BoidConfig = {
   maxSpeed: 2,
-  turnBackFactor: 0.5,
+  acceleration: {
+    turnBack: 0.6,
+    gravity: 0.05,
+  },
 }
 
 export class Boid {
@@ -30,9 +33,11 @@ export class Boid {
   }
 
   update(neighbors: Boid[], flightZone: vec2[], flightZoneCenter: vec3): void {
+    // Reset acceleration
+    this.acceleration = vec3.fromValues(0, this.config.acceleration.gravity, 0)
+
     // Simple boundary check
-    if (isInPolygon(this.position, flightZone) || this.desiredDirection) {
-      this.acceleration = vec3.create() // Reset acceleration if inside the flight zone
+    if (isInPolygon(this.position, flightZone)) {
       this.desiredDirection = null
     } else {
       this.desiredDirection = vec3.subtract(vec3.create(), flightZoneCenter, this.position)
@@ -42,7 +47,7 @@ export class Boid {
     if (this.desiredDirection) {
       const steering = limitTurn(this.velocity, this.desiredDirection, 180)
       vec3.normalize(steering, steering)
-      vec3.scale(steering, steering, this.config.turnBackFactor)
+      vec3.scale(steering, steering, this.config.acceleration.turnBack)
 
       vec3.add(this.acceleration, this.acceleration, steering)
     }

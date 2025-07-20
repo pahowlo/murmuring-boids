@@ -2,7 +2,10 @@ import { vec3 } from "gl-matrix"
 
 export interface BoidConfig {
   maxSpeed: number
-  turnBackFactor: number
+  acceleration: {
+    turnBack: number
+    gravity: number
+  }
 }
 
 export interface PercentPoint {
