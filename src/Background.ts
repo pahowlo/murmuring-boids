@@ -29,32 +29,34 @@ export class MurmuringBoidsBackground {
       ...renderOptions,
     }
 
-    const screen = {
-      width: window.screen.width,
-      height: window.screen.height,
+    const windowSize = {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      screenWidth: window.screen.width,
+      screenHeight: window.screen.height,
       devicePixelRatio: 0,
     }
 
     this.flightZone = [
       vec2.fromValues(
         // left-top
-        screen.width * (canvasConfig.topLeft.x + 0.2),
-        screen.height * (canvasConfig.topLeft.y + 0.2),
+        windowSize.width * (canvasConfig.topLeft.x + 0.2),
+        windowSize.height * (canvasConfig.topLeft.y + 0.2),
       ),
       vec2.fromValues(
         // right-top
-        screen.width * (canvasConfig.bottomRight.x - 0.2),
-        screen.height * (canvasConfig.topLeft.y + 0.2),
+        windowSize.width * (canvasConfig.bottomRight.x - 0.2),
+        windowSize.height * (canvasConfig.topLeft.y + 0.2),
       ),
       vec2.fromValues(
         // right-bottom
-        screen.width * (canvasConfig.bottomRight.x - 0.2),
-        screen.height * (canvasConfig.bottomRight.y - 0.3),
+        windowSize.width * (canvasConfig.bottomRight.x - 0.2),
+        windowSize.height * (canvasConfig.bottomRight.y - 0.3),
       ),
       vec2.fromValues(
         // left-bottom
-        screen.width * (canvasConfig.topLeft.x + 0.2),
-        screen.height * (canvasConfig.bottomRight.y - 0.3),
+        windowSize.width * (canvasConfig.topLeft.x + 0.2),
+        windowSize.height * (canvasConfig.bottomRight.y - 0.3),
       ),
     ]
 
@@ -66,23 +68,25 @@ export class MurmuringBoidsBackground {
 
     function resizeCanvas() {
       if (
-        screen.width === window.screen.width &&
-        screen.height === window.screen.height &&
-        screen.devicePixelRatio === window.devicePixelRatio
+        windowSize.screenWidth === window.screen.width &&
+        windowSize.screenHeight === window.screen.height &&
+        windowSize.devicePixelRatio === window.devicePixelRatio
       ) {
         return // No resize needed
       }
 
-      screen.width = window.screen.width
-      screen.height = window.screen.height
-      screen.devicePixelRatio = window.devicePixelRatio
+      windowSize.width = window.innerWidth
+      windowSize.height = window.innerHeight
+      windowSize.screenWidth = window.screen.width
+      windowSize.screenWidth = window.screen.height
+      windowSize.devicePixelRatio = window.devicePixelRatio
 
       const dpr = window.devicePixelRatio || 1
 
-      const x = canvasConfig.topLeft.x * screen.width
-      const y = canvasConfig.topLeft.y * screen.height
-      const width = (canvasConfig.bottomRight.x - canvasConfig.topLeft.x) * screen.width
-      const height = (canvasConfig.bottomRight.y - canvasConfig.topLeft.y) * screen.height
+      const x = canvasConfig.topLeft.x * windowSize.width
+      const y = canvasConfig.topLeft.y * windowSize.height
+      const width = (canvasConfig.bottomRight.x - canvasConfig.topLeft.x) * windowSize.width
+      const height = (canvasConfig.bottomRight.y - canvasConfig.topLeft.y) * windowSize.height
       canvas.width = width * dpr
       canvas.height = height * dpr
       canvas.style.position = "absolute"
@@ -131,7 +135,6 @@ export class MurmuringBoidsBackground {
       boid.update(this.boids, this.flightZone, this.flightZoneCenter)
     })
     this.render()
-
     this.animationId = requestAnimationFrame(this.animate)
   }
 
