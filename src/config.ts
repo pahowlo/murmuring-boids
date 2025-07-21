@@ -3,7 +3,6 @@ import { BoidConfig } from "./types"
 export const defaultRenderOptions = {
   canvasDepth: 500,
   backgroundColor: "#212121",
-  boidColor: "#ffffff",
   boidSize: 5,
 }
 

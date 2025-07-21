@@ -6,6 +6,7 @@ import { Boid } from "./boid"
 
 export class MurmuringBoidsBackground {
   private renderContext: RenderContext
+  private debug: boolean = false
 
   private animationId: number | null = null
   private isRunning = false
@@ -109,8 +110,10 @@ export class MurmuringBoidsBackground {
     window.addEventListener("resize", resizeCanvas)
   }
 
-  start(boidCount: number): void {
+  start(boidCount: number, debug: boolean): void {
     if (this.isRunning) return
+
+    this.debug = debug
 
     for (let i = 0; i < boidCount; i++) {
       const position = vec3.fromValues(
@@ -147,7 +150,9 @@ export class MurmuringBoidsBackground {
     const { ctx, canvas } = this.renderContext
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    this.renderFlightZone()
+    if (this.debug) {
+      this.renderFlightZone()
+    }
     this.boids.forEach((boid) => {
       boid.render(this.renderContext)
     })

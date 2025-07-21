@@ -59,9 +59,9 @@ export class Boid {
     const { ctx, canvas } = context
 
     const [x, y, z] = this.position
+    const opacity = 100 - (z / context.options.canvasDepth) ** 2 * 60
 
-    ctx.fillStyle = context.options.boidColor
-    ctx.globalAlpha = 1 - (z / context.options.canvasDepth) * 0.9
+    ctx.strokeStyle = `hsl(0, 0%, ${opacity}%)`
 
     ctx.save()
     ctx.translate(x, y)
@@ -76,12 +76,18 @@ export class Boid {
   }
 
   private drawBoid(ctx: CanvasRenderingContext2D, size: number): void {
+    // Draw triangle
     ctx.beginPath()
-    ctx.moveTo(size, 0)
-    ctx.lineTo(-size * 0.5, size * 0.5)
-    ctx.lineTo(-size * 0.3, 0)
-    ctx.lineTo(-size * 0.5, -size * 0.5)
+    ctx.moveTo(size, 0) // Nose
+    ctx.lineTo(-size * 0.5, size * 0.3) // Right wing
+    ctx.lineTo(-size * 0.5, -size * 0.3) // Left wing
     ctx.closePath()
-    ctx.fill()
+    ctx.stroke()
+
+    // Draw center line (fold)
+    ctx.beginPath()
+    ctx.moveTo(size, 0) // Nose
+    ctx.lineTo(-size * 0.5, 0) // Tail center
+    ctx.stroke()
   }
 }
