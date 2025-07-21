@@ -1,6 +1,7 @@
 import { vec3, vec2 } from "gl-matrix"
 
-import { CanvasConfig, RenderContext } from "./types"
+import { CanvasConfig, RenderOptions, RenderContext } from "./types"
+import { defaultRenderOptions } from "./config"
 import { Boid } from "./boid"
 
 export class MurmuringBoidsBackground {
@@ -13,20 +14,22 @@ export class MurmuringBoidsBackground {
   private flightZone: vec2[]
   private flightZoneCenter: vec3
 
-  constructor(window: Window, canvas: HTMLCanvasElement, canvasConfig: CanvasConfig, renderOptions = {}) {
+  constructor(
+    window: Window,
+    canvas: HTMLCanvasElement,
+    canvasConfig: CanvasConfig,
+    renderOptions: Partial<RenderOptions> = {},
+  ) {
     const ctx = canvas.getContext("2d")
     if (!ctx) throw new Error("Canvas context not available")
 
-    this.renderContext = { canvas, ctx }
-
-    const defaultRenderOptions = {
-      size: 6,
-      color: "#ffffff",
-      showTrail: false,
-      trailLength: 20,
-      trailColor: "#ffffff",
-      trailOpacity: 0.3,
-      ...renderOptions,
+    this.renderContext = {
+      canvas,
+      ctx,
+      options: {
+        ...defaultRenderOptions,
+        ...renderOptions,
+      },
     }
 
     const windowSize = {
@@ -66,6 +69,8 @@ export class MurmuringBoidsBackground {
       0,
     )
 
+    canvas.style.backgroundColor = this.renderContext.options.backgroundColor
+
     function resizeCanvas() {
       if (
         windowSize.screenWidth === window.screen.width &&
@@ -104,14 +109,14 @@ export class MurmuringBoidsBackground {
     window.addEventListener("resize", resizeCanvas)
   }
 
-  start(boidCount = 100): void {
+  start(boidCount: number): void {
     if (this.isRunning) return
 
     for (let i = 0; i < boidCount; i++) {
       const position = vec3.fromValues(
-        Math.random() * this.renderContext.canvas.width,
-        Math.random() * this.renderContext.canvas.height,
-        0,
+        Math.random() * this.renderContext.canvas.clientWidth,
+        Math.random() * this.renderContext.canvas.clientHeight,
+        Math.random() * this.renderContext.options.canvasDepth, // Use canvasDepth from config
       )
       this.boids.push(new Boid(position, { maxSpeed: 2 }))
     }
