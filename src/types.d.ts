@@ -18,7 +18,15 @@ export interface CanvasConfig {
   bottomRight: PercentPoint
 }
 
+export interface RenderOptions {
+  canvasDepth: number
+  backgroundColor: string
+  boidColor: string
+  boidSize: number
+}
+
 export interface RenderContext {
   canvas: HTMLCanvasElement
   ctx: CanvasRenderingContext2D
+  options: RenderOptions
 }

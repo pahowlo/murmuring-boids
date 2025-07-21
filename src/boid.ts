@@ -3,14 +3,7 @@ import { vec3, vec2 } from "gl-matrix"
 import { limitTurn } from "./utilities/constraints"
 import { isInPolygon } from "./utilities/rayCasting2D"
 import { BoidConfig, RenderContext } from "./types"
-
-const defaultConfig: BoidConfig = {
-  maxSpeed: 2,
-  acceleration: {
-    turnBack: 0.6,
-    gravity: 0.05,
-  },
-}
+import { defaultBoidConfig } from "./config"
 
 export class Boid {
   private position: vec3
@@ -20,10 +13,10 @@ export class Boid {
   private config: BoidConfig
   private desiredDirection: vec3 | null = null
 
-  constructor(position: vec3, config: Partial<BoidConfig> = {}) {
+  constructor(position: vec3, boidConfig: Partial<BoidConfig> = {}) {
     this.config = {
-      ...config,
-      ...defaultConfig,
+      ...boidConfig,
+      ...defaultBoidConfig,
     }
 
     const theta = Math.random() * 2 * Math.PI
@@ -65,17 +58,20 @@ export class Boid {
   render(context: RenderContext): void {
     const { ctx, canvas } = context
 
-    ctx.fillStyle = "#ff0000"
+    const [x, y, z] = this.position
+
+    ctx.fillStyle = context.options.boidColor
+    ctx.globalAlpha = 1 - (z / context.options.canvasDepth) * 0.9
 
     ctx.save()
-    ctx.translate(this.position[0], this.position[1])
+    ctx.translate(x, y)
 
     if (vec3.length(this.velocity) > 0) {
       const angle = Math.atan2(this.velocity[1], this.velocity[0])
       ctx.rotate(angle)
     }
 
-    this.drawBoid(ctx, 10)
+    this.drawBoid(ctx, context.options.boidSize)
     ctx.restore()
   }
 
