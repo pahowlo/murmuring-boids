@@ -21,7 +21,6 @@ export interface CanvasConfig {
 export interface RenderOptions {
   canvasDepth: number
   backgroundColor: string
-  boidColor: string
   boidSize: number
 }
 
