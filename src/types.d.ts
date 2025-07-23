@@ -1,5 +1,3 @@
-import { vec3 } from "gl-matrix"
-
 export interface BoidConfig {
   maxSpeed: number
   acceleration: {

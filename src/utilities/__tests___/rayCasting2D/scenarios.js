@@ -131,4 +131,6 @@ const scenarios = [
   },
 ]
 
+/* eslint-disable no-undef */
 module.exports = { scenarios }
+/* eslint-enable no-undef */
