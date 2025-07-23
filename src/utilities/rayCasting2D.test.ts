@@ -1,7 +1,6 @@
 import { vec2 } from "gl-matrix"
 import { isInPolygon } from "./rayCasting2D"
 
-// @ts-ignore
 import { scenarios } from "./__tests___/rayCasting2D/scenarios"
 
 describe("Polygon scenarios", () => {

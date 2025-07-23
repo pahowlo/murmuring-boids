@@ -56,7 +56,7 @@ export class Boid {
   }
 
   render(context: RenderContext): void {
-    const { ctx, canvas } = context
+    const { ctx } = context
 
     const [x, y, z] = this.position
     const opacity = 100 - (z / context.options.canvasDepth) ** 2 * 60

@@ -72,7 +72,7 @@ export class MurmuringBoidsBackground {
 
     canvas.style.backgroundColor = this.renderContext.options.backgroundColor
 
-    function resizeCanvas() {
+    function resizeCanvas(): void {
       if (
         windowSize.screenWidth === window.screen.width &&
         windowSize.screenHeight === window.screen.height &&
