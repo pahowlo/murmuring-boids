@@ -15,5 +15,5 @@
 
   // Files to compile
   "include": ["src", "src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "exclude": ["node_modules", "**/*.test.ts", "__tests__", "__tests__/**/*"]
 }
