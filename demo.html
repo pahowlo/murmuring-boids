@@ -21,19 +21,12 @@
   <body>
     <canvas id="canvas"></canvas>
     <script type="module">
-      import { MurmuringBoidsBackground } from "/src/index.js"
-
-      // Define top-left and bottom-right as percentages (0-1)
-      const topLeft = { x: 0, y: 0 }
-      const bottomRight = { x: 1, y: 1 }
+      import { MurmuringBoidsBackground } from "/src/main.js"
 
       const canvas = document.getElementById("canvas")
 
-      const background = new MurmuringBoidsBackground(window, canvas, {
-        topLeft: topLeft,
-        bottomRight: bottomRight,
-      })
-      background.start(1000, true)
+      const background = new MurmuringBoidsBackground(window, canvas)
+      background.start(1500, true)
     </script>
   </body>
 </html>

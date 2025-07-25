@@ -1,0 +1,49 @@
+#!/bin/sh
+if ( return 0 2>/dev/null ); then
+    echo "[ERROR] This script must be run, not sourced." >&2
+    return 1
+fi
+
+SCRIPTS_DIR=$(dirname "$(realpath "$0")")
+ROOT_DIR=$(realpath "$SCRIPTS_DIR/..")
+
+# Imports
+. "$SCRIPTS_DIR/common/utils.sh"
+
+
+function build_target()
+{
+    more_recent_version jq 1.6
+
+    cd $ROOT_DIR
+    rm -rf target
+
+    # Compile ts sources
+    tsc --outDir target/dist
+
+    # Include minimal package.json
+    jq '{
+            name,
+            version,
+            description,
+            author,
+            license,
+            main,
+            exports,
+            types,
+            dependencies,
+        } +
+        (if has("packageManager") then {packageManager}    else {} end) +
+        (if has("repository")     then {repository}    else {} end) +
+        (if has("publishConfig")  then {publishConfig} else {} end) +
+        (if has("keywords")       then {keywords}      else {} end)
+    ' package.json > target/package.json
+
+    sed -i 's~src/~dist/~g' target/package.json
+
+    cd - >/dev/null
+}
+
+
+
+build_target "$@"

@@ -1,22 +1,18 @@
 {
   "name": "murmuring-boids",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "pahowlo <paul.legoux@gmail.com>",
   "license": "",
   "description": "A JS component for rendering an interactive murmuring boids animation.",
-  "type": "module",
-  "main": "dist/Background.js",
-  "exports": {
-    ".": "./dist/Background.js"
-  },
-  "types": "dist/Background.d.ts",
+  "main": "./src/main.ts",
+  "exports": "./src/main.ts",
+  "types": "./src/main.d.ts",
   "dependencies": {
     "gl-matrix": "^3.4.3"
   },
   "scripts": {
-    "build": "tsc",
-    "check": "tsc --noEmit",
-    "clean": "rm -r dist/ node_modules/ pnpm-lock.yaml package-lock.json",
+    "build": "./.scripts/build",
+    "clean": "rm -rf node_modules/ dist/ target/ pnpm-lock.yaml",
     "demo": "vite",
     "format": "prettier --config package.json --write 'src/**/*.{js,ts,json}'",
     "lint:fix": "eslint src/ --fix",
