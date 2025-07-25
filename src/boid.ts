@@ -1,17 +1,29 @@
-import { vec3, vec2 } from "gl-matrix"
+import { vec3 } from "gl-matrix"
 
 import { limitTurn } from "./utilities/constraints"
 import { isInPolygon } from "./utilities/rayCasting2D"
-import { BoidConfig, RenderContext } from "./types"
-import { defaultBoidConfig } from "./config"
+import { BoidConfig } from "./config.d"
 
+export const defaultBoidConfig: BoidConfig = {
+  size: 5,
+  minSpeed: 1,
+  maxSpeed: 6,
+  maxTurnAngleDeg: 120,
+  acceleration: { meetObjective: 1.5, gravity: 0.05 },
+}
+
+// Main class
 export class Boid {
   private position: vec3
   private velocity: vec3
   private acceleration: vec3
 
   private config: BoidConfig
-  private desiredDirection: vec3 | null = null
+
+  private objective?: {
+    direction: vec3
+    remainingTicks: number
+  }
 
   constructor(position: vec3, boidConfig: Partial<BoidConfig> = {}) {
     this.config = {
@@ -25,69 +37,67 @@ export class Boid {
     this.acceleration = vec3.create()
   }
 
-  update(neighbors: Boid[], flightZone: vec2[], flightZoneCenter: vec3): void {
+  getPosition(): vec3 {
+    return this.position
+  }
+
+  getVelocity(): vec3 {
+    return this.velocity
+  }
+
+  getSize(): number {
+    return this.config.size
+  }
+
+  update(neighbors: Boid[], polygon: vec3[], centroids: vec3[]): void {
     // Reset acceleration
     this.acceleration = vec3.fromValues(0, this.config.acceleration.gravity, 0)
 
     // Simple boundary check
-    if (isInPolygon(this.position, flightZone)) {
-      this.desiredDirection = null
-    } else {
-      this.desiredDirection = vec3.subtract(vec3.create(), flightZoneCenter, this.position)
-      vec3.normalize(this.desiredDirection, this.desiredDirection)
+    if (!isInPolygon(this.position, polygon) && !this.objective) {
+      let turnBackDirection = vec3.create()
+      let maxDist = 0
+      for (const point of centroids) {
+        const diff = vec3.subtract(vec3.create(), point, this.position)
+        const dist = Math.abs(diff[0]) + Math.abs(diff[1])
+        if (dist > maxDist) {
+          maxDist = dist
+          turnBackDirection = diff
+        }
+      }
+      turnBackDirection[2] = 0 // Keep it 2D
+      vec3.normalize(turnBackDirection, turnBackDirection)
+      this.objective = {
+        direction: turnBackDirection,
+        remainingTicks: 30,
+      }
     }
 
-    if (this.desiredDirection) {
-      const steering = limitTurn(this.velocity, this.desiredDirection, 180)
+    if (this.objective) {
+      const steering = limitTurn(this.velocity, this.objective.direction, this.config.maxTurnAngleDeg)
       vec3.normalize(steering, steering)
-      vec3.scale(steering, steering, this.config.acceleration.turnBack)
+      vec3.scale(steering, steering, this.config.acceleration.meetObjective)
 
       vec3.add(this.acceleration, this.acceleration, steering)
+
+      this.objective.remainingTicks -= 1
+      if (this.objective.remainingTicks <= 0) {
+        this.objective = undefined
+      }
     }
 
     // Update velocity
     vec3.add(this.velocity, this.velocity, this.acceleration)
+
     if (vec3.length(this.velocity) > this.config.maxSpeed) {
       vec3.normalize(this.velocity, this.velocity)
-      vec3.scale(this.velocity, this.velocity, this.config.maxSpeed + 1)
+      vec3.scale(this.velocity, this.velocity, this.config.maxSpeed)
+    } else if (vec3.length(this.velocity) < this.config.minSpeed) {
+      vec3.normalize(this.velocity, this.velocity)
+      vec3.scale(this.velocity, this.velocity, this.config.minSpeed)
     }
+
     // Update position
     this.position = vec3.add(this.position, this.position, this.velocity)
-  }
-
-  render(context: RenderContext): void {
-    const { ctx } = context
-
-    const [x, y, z] = this.position
-    const opacity = 100 - (z / context.options.canvasDepth) ** 2 * 60
-
-    ctx.strokeStyle = `hsl(0, 0%, ${opacity}%)`
-
-    ctx.save()
-    ctx.translate(x, y)
-
-    if (vec3.length(this.velocity) > 0) {
-      const angle = Math.atan2(this.velocity[1], this.velocity[0])
-      ctx.rotate(angle)
-    }
-
-    this.drawBoid(ctx, context.options.boidSize)
-    ctx.restore()
-  }
-
-  private drawBoid(ctx: CanvasRenderingContext2D, size: number): void {
-    // Draw triangle
-    ctx.beginPath()
-    ctx.moveTo(size, 0) // Nose
-    ctx.lineTo(-size * 0.5, size * 0.3) // Right wing
-    ctx.lineTo(-size * 0.5, -size * 0.3) // Left wing
-    ctx.closePath()
-    ctx.stroke()
-
-    // Draw center line (fold)
-    ctx.beginPath()
-    ctx.moveTo(size, 0) // Nose
-    ctx.lineTo(-size * 0.5, 0) // Tail center
-    ctx.stroke()
   }
 }

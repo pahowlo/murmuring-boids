@@ -9,7 +9,7 @@ export { isInPolygon }
  * @param position - The point to check.
  * @param polygon - Array of vertices defining the polygon.
  */
-function isInPolygon(position: vec2 | vec3, polygon: vec2[]): boolean {
+function isInPolygon(position: vec2 | vec3, polygon: vec2[] | vec3[]): boolean {
   if (polygon.length < 3) {
     return false // Not a valid polygon
   }
