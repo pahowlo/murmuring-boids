@@ -1,15 +1,18 @@
-import { BoidConfig } from "./types"
-
-export const defaultRenderOptions = {
-  canvasDepth: 500,
-  backgroundColor: "#212121",
-  boidSize: 5,
+export interface BoidConfig {
+  size: number
+  minSpeed: number
+  maxSpeed: number
+  maxTurnAngleDeg: number
+  acceleration: {
+    meetObjective: number
+    gravity: number
+  }
 }
 
-export const defaultBoidConfig: BoidConfig = {
-  maxSpeed: 2,
-  acceleration: {
-    turnBack: 0.6,
-    gravity: 0.025,
-  },
+export interface RendererConfig {
+  backgroundColor: string
+  clearCanvasIfResized: boolean
+  debug: {
+    flightZoneColor: string
+  }
 }

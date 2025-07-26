@@ -1,8 +1,8 @@
 import { vec3 } from "gl-matrix"
 
+import type { BoidConfig } from "./config"
 import { limitTurn } from "./utilities/constraints"
 import { isInPolygon } from "./utilities/rayCasting2D"
-import { BoidConfig } from "./config"
 
 export const defaultBoidConfig: BoidConfig = {
   size: 5,

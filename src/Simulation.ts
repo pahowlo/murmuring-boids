@@ -1,6 +1,6 @@
 import { vec3 } from "gl-matrix"
 
-import { BoidConfig } from "./config.d"
+import type { BoidConfig } from "./config"
 import { Boid } from "./Boid"
 import { FlightZone, Box } from "./FlightZone"
 

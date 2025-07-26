@@ -1,4 +1,4 @@
-import { RendererConfig } from "./config.d"
+import type { RendererConfig } from "./config"
 import { Boid } from "./Boid"
 import { FlightZone, Box } from "./FlightZone"
 
