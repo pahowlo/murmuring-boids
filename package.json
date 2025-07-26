@@ -6,7 +6,6 @@
   "description": "A JS component for rendering an interactive murmuring boids animation.",
   "main": "./src/main.ts",
   "exports": "./src/main.ts",
-  "types": "./src/main.d.ts",
   "dependencies": {
     "gl-matrix": "^3.4.3"
   },
@@ -15,10 +14,8 @@
     "clean": "rm -rf node_modules/ dist/ target/ pnpm-lock.yaml",
     "demo": "vite",
     "format": "prettier --config package.json --write 'src/**/*.{js,ts,json}'",
-    "lint:fix": "eslint src/ --fix",
-    "lint": "eslint src/",
-    "test:coverage": "jest --coverage",
-    "test:watch": "jest --watch",
+    "check:fix": "eslint src/ --fix",
+    "check": "eslint src/ && echo && tsc --noEmit",
     "test": "jest"
   },
   "prettier": {

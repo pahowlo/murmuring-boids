@@ -20,10 +20,7 @@ export default [
 
       // WARNING
       // Enforce explicit return types for functions - not for arrow expressions
-      "@typescript-eslint/explicit-function-return-type": [
-        "warn",
-        { allowExpressions: true },
-      ],
+      "@typescript-eslint/explicit-function-return-type": ["warn", { allowExpressions: true }],
       // Highlight console.log in production code
       "no-console": "warn",
     },
@@ -35,8 +32,24 @@ export default [
       "no-restricted-syntax": [
         "error",
         {
-          selector: "*",
+          // Select Program to fire only once for the root of the file
+          selector: "Program", 
           message: ".spec.ts file found. Use .test.ts instead for consistency,",
+        },
+      ],
+    },
+  },
+  {
+    files: ["**/*.d.ts"],
+    ignores: ["**/__tests___/**"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          // Select Program to fire only once for the root of the file
+          selector: "Program",
+          message:
+            ".d.ts file found. These are output files to provide optional type definitions in compiled JS dist. Use .ts only in source",
         },
       ],
     },
