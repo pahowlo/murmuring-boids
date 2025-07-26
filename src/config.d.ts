@@ -11,6 +11,7 @@ export interface BoidConfig {
 
 export interface RendererConfig {
   backgroundColor: string
+  clearCanvasIfResized: boolean
   debug: {
     flightZoneColor: string
   }
