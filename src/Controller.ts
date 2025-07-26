@@ -14,6 +14,7 @@ export class Controller {
 
   private isRunning = false
   private animationId: number | null = null
+  private resizeTimeoutId: number | null = null
 
   constructor(window: Window, canvas: HTMLCanvasElement, rendererConfig: Partial<RendererConfig> = {}) {
     this.renderer = new Renderer(window, canvas, rendererConfig)
@@ -30,22 +31,18 @@ export class Controller {
 
     this.isRunning = true
     this.simulation.start(boidCount, boidConfig)
-    this.animate()
+    this.animationLoop()
+    this.resizeLoop()
   }
 
-  private animate = (): void => {
+  private animationLoop = (): void => {
     if (!this.isRunning) return
 
-    // Resize if needed
-    this.renderer.resize()
-    this.flightZone.resize(this.renderer.canvasBox)
-    this.simulation.resize(this.renderer.screenBox)
-
-    // Increment simulation
+    // Update simulation
     this.simulation.update(this.flightZone)
 
-    // Render
-    this.renderer.clearCanvas()
+    // Draw
+    this.renderer.clearCanvas() // Start clean
     if (this.debug) {
       this.renderer.drawFlightZone(this.flightZone)
     }
@@ -54,13 +51,31 @@ export class Controller {
       this.renderer.drawBoid(boid, maxDepth)
     })
 
-    this.animationId = requestAnimationFrame(this.animate)
+    this.animationId = requestAnimationFrame(this.animationLoop)
+  }
+
+  private resizeLoop = (): void => {
+    if (!this.isRunning) return
+
+    // Resize only display settings have changed
+    const resized = this.renderer.checkResize() // Start fresh
+    if (resized) {
+      this.flightZone.resize(this.renderer.canvasBox)
+      this.simulation.resize(this.renderer.screenBox)
+    }
+
+    // FPS 100
+    this.resizeTimeoutId = setTimeout(this.resizeLoop, 10) as unknown as number
   }
 
   stop(): void {
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId)
-      this.animationId = null
+    if (this.resizeTimeoutId) {
+      cancelAnimationFrame(this.resizeTimeoutId)
+      this.resizeTimeoutId = null
+    }
+    if (this.resizeTimeoutId) {
+      clearTimeout(this.resizeTimeoutId)
+      this.resizeTimeoutId = null
     }
 
     this.renderer.clearCanvas()

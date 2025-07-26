@@ -4,6 +4,7 @@ import { FlightZone, Box } from "./FlightZone"
 
 export const defaultRendererConfig: RendererConfig = {
   backgroundColor: "#212121",
+  clearCanvasIfResized: true,
   debug: {
     flightZoneColor: "#00ff00",
   },
@@ -45,11 +46,13 @@ export class Renderer {
       r.height,
     )
 
-    this.redrawCanvas()
-    window.addEventListener("resize", this.resize)
+    this.scaleCanvas()
   }
 
-  resize(): void {
+  /**
+   * Return true if a change was detected in display settings that lead to resizing the canvas.
+   */
+  checkResize(): boolean {
     this.screenBox = new Box(0, 0, this.window.screen.width, this.window.screen.height)
 
     // Check if display settings have changed
@@ -65,16 +68,20 @@ export class Renderer {
 
     if (this.canvasBox.equals(newCanvasBox) && this.devicePixelRatio === newdevicePixelRatio) {
       // No resize required
-      return
+      return false
     }
 
+    if (this.rendererConfig.clearCanvasIfResized) {
+      this.clearCanvas() // Start clean
+    }
     // Redraw canvas to match new display settings
     this.devicePixelRatio = newdevicePixelRatio
     this.canvasBox = newCanvasBox
-    this.redrawCanvas()
+    this.scaleCanvas()
+    return true
   }
 
-  private redrawCanvas(): void {
+  private scaleCanvas(): void {
     this.canvas.style.backgroundColor = this.rendererConfig.backgroundColor
 
     // Fetch canvas CSS pixel size
