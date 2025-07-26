@@ -141,18 +141,15 @@ export class Renderer {
     ctx.rotate(angle)
 
     ctx.strokeStyle = `hsl(10, 10%, ${Math.max(10, 100 - (pos[2] / maxDepth) * 80)}%)`
-    // Draw triangle
     ctx.beginPath()
+    // Define triangle
     ctx.moveTo(size, 0) // Nose
     ctx.lineTo(-size * 0.5, size * 0.3) // Right wing
     ctx.lineTo(-size * 0.5, -size * 0.3) // Left wing
-    ctx.closePath()
-    ctx.stroke()
-
-    // Draw center line (fold)
-    ctx.beginPath()
+    // Define center line (fold)
     ctx.moveTo(size, 0) // Nose
     ctx.lineTo(-size * 0.5, 0) // Tail center
+    // Draw
     ctx.closePath()
     ctx.stroke()
 
