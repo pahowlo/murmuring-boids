@@ -16,7 +16,11 @@ export class Controller {
   private animationId: number | null = null
   private resizeTimeoutId: number | null = null
 
-  constructor(window: Window, canvas: HTMLCanvasElement, rendererConfig: Partial<RendererConfig> = {}) {
+  constructor(
+    window: Window,
+    canvas: HTMLCanvasElement,
+    rendererConfig: Partial<RendererConfig> = {},
+  ) {
     this.renderer = new Renderer(window, canvas, rendererConfig)
     this.flightZone = new FlightZone(this.renderer.canvasBox)
     this.simulation = new Simulation(this.renderer.screenBox, maxDepth)

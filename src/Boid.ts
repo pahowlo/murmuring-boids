@@ -10,9 +10,9 @@ export const defaultBoidConfig: BoidConfig = {
   maxTurnAngleDeg: 120,
   acceleration: {
     meetObjective: 1.5,
-    // cohesion: 0.1,
-    // alignment: 0.1,
-    // separation: 0.1,
+    cohesion: 0.5,
+    alignment: 0.5,
+    separation: 0.9,
     gravity: 0.05, // Positive since (0, 0) is the top left corner
   },
 }
@@ -40,7 +40,11 @@ export class Boid {
 
     const theta = Math.random() * 2 * Math.PI
     this.position = position
-    this.velocity = vec3.fromValues(Math.cos(theta) * this.config.maxSpeed, Math.sin(theta) * this.config.maxSpeed, 0)
+    this.velocity = vec3.fromValues(
+      Math.cos(theta) * this.config.maxSpeed,
+      Math.sin(theta) * this.config.maxSpeed,
+      0,
+    )
     this.acceleration = vec3.create()
   }
 
@@ -52,7 +56,13 @@ export class Boid {
     return vec3.clone(this.velocity)
   }
 
-  update(neighbors: Boid[], closeNeighbors: Boid[], polygon: vec3[], centroids: vec3[]): void {
+  update(
+    neighbors: Boid[],
+    closeNeighbors: Boid[],
+    cellSize: vec3,
+    polygon: vec3[],
+    centroids: vec3[],
+  ): void {
     // Init self acceleration. Basically where little birdie wants to go
     const selfAcceleration = vec3.create()
 
@@ -76,37 +86,55 @@ export class Boid {
       }
     }
 
-    if (this.objective) {
+    if (this.objective && this.objective.remainingTicks > 0) {
       this.objective.remainingTicks -= 1
-      if (this.objective.remainingTicks <= 0) {
-        this.objective = undefined
-      } else {
-        // Move towards objective}
-        const steering = vec3.copy(vec3.create(), this.objective.direction)
-        vec3.normalize(steering, steering)
-        vec3.scale(steering, steering, this.config.acceleration.meetObjective)
+      // Move towards objective
+      const steering = vec3.copy(vec3.create(), this.objective.direction)
+      vec3.normalize(steering, steering)
+      vec3.scale(steering, steering, this.config.acceleration.meetObjective)
 
-        vec3.add(selfAcceleration, selfAcceleration, steering)
-      }
+      vec3.add(selfAcceleration, selfAcceleration, steering)
+    } else {
+      this.objective = undefined
     }
 
-    // // Cohesion and alignment
-    // for (const neighbor of neighbors) {
-    //   // Cohesion: Move towards the average position of neighbors
-    //   const diff = vec3.subtract(vec3.create(), this.position, neighbor.getPosition())
-    //   diff[2] = 0 // Keep it 2D
-    //   const dist = vec3.length(diff)
-    //   if (dist == 0) {
-    //     continue
-    //   }
-    //   vec3.scale(diff, diff, this.config.acceleration.separation)
-    //   vec3.add(this.acceleration, this.acceleration, diff)
+    // Cohesion and alignment
+    const alignment = vec3.create()
+    const cohesion = vec3.create()
+    for (const neighbor of neighbors) {
+      // Cohesion: Move towards the average position of neighbors
+      const cohesionDir = vec3.subtract(vec3.create(), neighbor.getPosition(), this.position)
+      cohesionDir[2] = 0 // Keep it 2D
+      vec3.add(cohesion, cohesion, cohesionDir)
 
-    //   // Alignment: Move towards the average velocity of neighbors
-    //   vec3.add(this.acceleration, this.acceleration, neighbor.getVelocity())
-    //   vec3.scale(this.acceleration, this.acceleration, this.config.acceleration.alignment)
-    //   vec3.add(this.acceleration, this.acceleration, this.velocity)
-    // }
+      const alignmentDir = neighbor.getVelocity()
+      alignmentDir[2] = 0 // Keep it 2D
+      vec3.add(alignment, alignment, alignmentDir)
+    }
+    vec3.normalize(cohesion, cohesion)
+    vec3.scale(cohesion, cohesion, this.config.acceleration.cohesion)
+    vec3.normalize(alignment, alignment)
+    vec3.scale(alignment, alignment, this.config.acceleration.alignment)
+
+    vec3.add(selfAcceleration, selfAcceleration, cohesion)
+    vec3.add(selfAcceleration, selfAcceleration, alignment)
+
+    // Separation: Avoid close neighbors
+    const separation = vec3.create()
+    const cellRadius = Math.max(cellSize[0], cellSize[1], cellSize[2])
+    for (const neighbor of closeNeighbors) {
+      const separationDir = vec3.subtract(vec3.create(), this.position, neighbor.getPosition())
+      separationDir[2] = 0 // Keep it 2D
+      const dist = vec3.length(separationDir)
+      if (dist === 0) continue // Skip superposed neighbors
+
+      vec3.scale(separationDir, separationDir, cellRadius / dist)
+      vec3.add(separation, separation, separationDir)
+    }
+
+    vec3.normalize(separation, separation)
+    vec3.scale(separation, separation, this.config.acceleration.separation)
+    vec3.add(selfAcceleration, selfAcceleration, separation)
 
     // Reset acceleration with truncated self acceleration
     limitTurn(this.acceleration, this.velocity, selfAcceleration, this.config.maxTurnAngleDeg)
