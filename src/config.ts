@@ -23,6 +23,7 @@ export interface RendererConfig {
 }
 
 export interface SimulationConfig {
+  maxDepth: number
   grid: {
     neighborDistance: number
     closeNeighborDistance: number

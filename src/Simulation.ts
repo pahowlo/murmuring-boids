@@ -6,6 +6,7 @@ import { Boid } from "./Boid"
 import { FlightZone, Box } from "./FlightZone"
 
 export const defaultSimulationConfig: SimulationConfig = {
+  maxDepth: 250,
   grid: {
     neighborDistance: 2,
     closeNeighborDistance: 0,
@@ -17,7 +18,6 @@ export const defaultSimulationConfig: SimulationConfig = {
 // Main class
 export class Simulation {
   private simBox: Box
-  private maxDepth: number
   private config: SimulationConfig
 
   maxBoidCount: number = 0
@@ -29,9 +29,8 @@ export class Simulation {
 
   private nextDisplayId: number = 0
 
-  constructor(simBox: Box, maxDepth: number, simulationConfig: Partial<SimulationConfig> = {}) {
+  constructor(simBox: Box, simulationConfig: Partial<SimulationConfig> = {}) {
     this.simBox = simBox
-    this.maxDepth = maxDepth
 
     this.config = {
       ...defaultSimulationConfig,
@@ -40,10 +39,14 @@ export class Simulation {
     this.spatialGrid = new IncrementalSpatialGrid<Boid>(this.config.grid.cellSize)
   }
 
+  maxDepth(): number {
+    return this.config.maxDepth
+  }
+
   resize(newSimBox: Box, maxDepth?: number): void {
     this.simBox = newSimBox
     if (maxDepth) {
-      this.maxDepth = maxDepth
+      this.config.maxDepth = maxDepth
     }
   }
 
@@ -55,7 +58,7 @@ export class Simulation {
       const position = vec3.fromValues(
         this.simBox.start.x + this.simBox.width * (Math.random() * 1.4 - 0.2),
         this.simBox.start.y + this.simBox.height * (Math.random() * 1.4 - 0.2),
-        Math.random() * this.maxDepth,
+        Math.random() * this.config.maxDepth,
       )
       const boid = new Boid(this.nextDisplayId, position, this.boidConfig)
       this.nextDisplayId++
@@ -85,6 +88,7 @@ export class Simulation {
         neighbors,
         closeNeighbors,
         this.spatialGrid.cellSize,
+        (pos: vec3) => flightZone.isOutside(pos),
         flightZone.polygon,
         flightZone.centroids,
       )

@@ -1,5 +1,7 @@
 import { vec3 } from "gl-matrix"
 
+import { isInPolygon } from "./utilities/rayCasting2D"
+
 export class Box {
   readonly start: { x: number; y: number }
   readonly end: { x: number; y: number }
@@ -25,40 +27,40 @@ export class Box {
 
 // Main class
 export class FlightZone {
+  private canvasBox: Box
+
+  maxDepth: number
   polygon: vec3[]
   centroids: vec3[]
 
-  private canvasBox: Box
+  constructor(canvasBox: Box, maxDepth: number, paddingRatio: number = 0.1) {
+    this.canvasBox = canvasBox
+    this.maxDepth = maxDepth
 
-  constructor(canvasBox: Box, paddingRatio: number = 0.15) {
+    const halfDepth = maxDepth / 2
     const padding = Math.min(canvasBox.width * paddingRatio, canvasBox.height * paddingRatio)
     this.polygon = [
       // left-top
-      vec3.fromValues(canvasBox.start.x + padding, canvasBox.start.y + padding, 0),
+      vec3.fromValues(canvasBox.start.x + padding, canvasBox.start.y + padding, halfDepth),
       // right-top
-      vec3.fromValues(canvasBox.end.x - padding, canvasBox.start.y + padding, 0),
+      vec3.fromValues(canvasBox.end.x - padding, canvasBox.start.y + padding, halfDepth),
       // right-bottom
-      vec3.fromValues(canvasBox.end.x - padding, canvasBox.end.y - padding, 0),
+      vec3.fromValues(canvasBox.end.x - padding, canvasBox.end.y - padding, halfDepth),
       // left-bottom
-      vec3.fromValues(canvasBox.start.x + padding, canvasBox.end.y - padding, 0),
+      vec3.fromValues(canvasBox.start.x + padding, canvasBox.end.y - padding, halfDepth),
     ]
-    this.centroids = [this.getCenter()]
-
-    this.canvasBox = canvasBox
+    this.centroids = []
   }
 
-  getCenter(): vec3 {
-    return vec3.fromValues(
-      this.polygon.reduce((sum, v) => sum + v[0], 0) / this.polygon.length,
-      this.polygon.reduce((sum, v) => sum + v[1], 0) / this.polygon.length,
-      0,
-    )
+  /** Returns true if the position is outside the flight zone
+   * defined by its 2D polygon and depth. */
+  isOutside(position: vec3): boolean {
+    const z = position[2]
+    return z > this.maxDepth || z < 0 || !isInPolygon(position, this.polygon)
   }
 
-  /**
-   * Translates and scales every vertex of the polygon and every centroid
-   * to fit into the new box.
-   */
+  /** Translates and scales every vertex of the polygon and every centroid
+   * to fit into the new box. */
   resize(newCanvasBox: Box): void {
     if (this.canvasBox.equals(newCanvasBox)) return // No resize required
 

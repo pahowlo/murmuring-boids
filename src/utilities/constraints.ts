@@ -10,28 +10,26 @@ import { vec3 } from "gl-matrix"
 export function limitTurn(out: vec3, velocity: vec3, acceleration: vec3, maxAngle: number): void {
   // Get current pointing direction of the velocity
   const normalizedDir = vec3.normalize(vec3.create(), velocity)
+  const normalizedAccel = vec3.normalize(vec3.create(), acceleration)
 
   // Check if max turn angle is exceeded by the acceleration
   const maxAngleRad = (maxAngle * Math.PI) / 180
-  const angleRad = vec3.angle(normalizedDir, vec3.normalize(vec3.create(), acceleration))
-  if (angleRad < maxAngleRad) {
+  const angleRad = vec3.angle(normalizedDir, normalizedAccel)
+  if (angleRad <= maxAngleRad) {
     vec3.copy(out, acceleration)
     return // Nothing to do
   }
 
-  // Get sign of rotation angle
-  const sign = angleRad >= 0 ? 1 : -1
+  // Calculate interpolation factor to limit to maxAngle.
+  // Linear interpolation (lerp) can underestimate the angle up to 15% for 120 degrees 
+  // hence the manual adjustment.
+  // TODO: implement spherical interpolation (slerp) to avoid this.
+  const t = (maxAngleRad + 20) / angleRad
 
-  // 2D Rotate direction by to max angle in that rotation direction
-  const cos = Math.cos(maxAngleRad)
-  const sin = Math.sin(maxAngleRad) * sign
-  vec3.set(
-    out,
-    normalizedDir[0] * cos - normalizedDir[1] * sin,
-    normalizedDir[0] * sin + normalizedDir[1] * cos,
-    0,
-  )
+  // Spherically interpolate between velocity direction and acceleration direction
+  vec3.lerp(out, normalizedDir, normalizedAccel, t)
 
   // Finally, scale to match acceleration
+  vec3.normalize(out, out) // Lerp doesn't preserve length
   vec3.scale(out, out, vec3.length(acceleration))
 }
