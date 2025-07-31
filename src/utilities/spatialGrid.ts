@@ -5,7 +5,7 @@ interface Item {
 }
 
 export class IncrementalSpatialGrid<T extends Item> {
-  private cellSize: vec3
+  readonly cellSize: vec3
   private grid: Map<string, T[]>
   private prevCellKeys: Map<T, string> = new Map()
 
@@ -60,7 +60,7 @@ export class IncrementalSpatialGrid<T extends Item> {
   /**
    * Fetch all neighbors in the diamond-shaped area around the item of gridDistance length.
    */
-  getNeighbors(item: T, gridDistance: number, limit: number = 10): T[] {
+  getNeighbors(item: T, gridDistance: number, maxCount: number = 1_000): T[] {
     const cellKey = this.getCellKey(item.getPosition())
 
     const neighbors: T[] = []
@@ -73,7 +73,7 @@ export class IncrementalSpatialGrid<T extends Item> {
 
         neighbors.push(neighbor)
         neighborCount++
-        if (neighborCount >= limit) {
+        if (neighborCount >= maxCount) {
           return neighbors // early return since we have enough neighbors
         }
       }
@@ -87,9 +87,9 @@ export class IncrementalSpatialGrid<T extends Item> {
         const neighborCell = this.grid.get(`${centerX + dx},${centerY + dy}`)
         if (!neighborCell) continue // Skip empty cells
 
-        const limitReached = neighborCount + neighborCell.length >= limit
+        const limitReached = neighborCount + neighborCell.length >= maxCount
         if (limitReached) {
-          neighbors.push(...neighborCell.slice(0, limit - neighborCount))
+          neighbors.push(...neighborCell.slice(0, maxCount - neighborCount))
           return neighbors // early return since we have enough neighbors
         }
 

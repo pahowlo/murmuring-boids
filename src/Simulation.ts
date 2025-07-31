@@ -7,7 +7,10 @@ import { FlightZone, Box } from "./FlightZone"
 
 export const defaultSimulationConfig: SimulationConfig = {
   grid: {
-    cellSize: { x: 20, y: 20 },
+    neighborDistance: 2,
+    closeNeighborDistance: 0,
+    maxNeighborCount: 20,
+    cellSize: { x: 10, y: 10 },
   },
 }
 
@@ -67,10 +70,24 @@ export class Simulation {
     if (!this.isRunning) return
 
     for (const boid of this.boids) {
-      const neighbors = this.spatialGrid.getNeighbors(boid, 2)
-      const closeNeighbors = this.spatialGrid.getNeighbors(boid, 0)
-      
-      boid.update(neighbors, closeNeighbors, flightZone.polygon, flightZone.centroids)
+      const neighbors = this.spatialGrid.getNeighbors(
+        boid,
+        this.config.grid.neighborDistance,
+        this.config.grid.maxNeighborCount,
+      )
+      const closeNeighbors = this.spatialGrid.getNeighbors(
+        boid,
+        this.config.grid.closeNeighborDistance,
+        this.config.grid.maxNeighborCount,
+      )
+
+      boid.update(
+        neighbors,
+        closeNeighbors,
+        this.spatialGrid.cellSize,
+        flightZone.polygon,
+        flightZone.centroids,
+      )
       this.spatialGrid.update(boid)
     }
   }

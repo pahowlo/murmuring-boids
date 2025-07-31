@@ -9,26 +9,29 @@ import { vec3 } from "gl-matrix"
  */
 export function limitTurn(out: vec3, velocity: vec3, acceleration: vec3, maxAngle: number): void {
   // Get current pointing direction of the velocity
-  const direction = vec3.normalize(vec3.create(), velocity)
+  const normalizedDir = vec3.normalize(vec3.create(), velocity)
 
   // Check if max turn angle is exceeded by the acceleration
   const maxAngleRad = (maxAngle * Math.PI) / 180
-  const crossProduct = vec3.dot(vec3.normalize(vec3.create(), direction), vec3.normalize(vec3.create(), acceleration))
-  const angleRad = Math.acos(crossProduct)
+  const angleRad = vec3.angle(normalizedDir, vec3.normalize(vec3.create(), acceleration))
   if (angleRad < maxAngleRad) {
     vec3.copy(out, acceleration)
     return // Nothing to do
   }
 
-  // Truncate the acceleration to the max angle
-  // First, find sign of rotation angle
-  const sign = crossProduct >= 0 ? 1 : -1
+  // Get sign of rotation angle
+  const sign = angleRad >= 0 ? 1 : -1
 
-  // Then, rotate direction by to max angle in that rotation direction
+  // 2D Rotate direction by to max angle in that rotation direction
   const cos = Math.cos(maxAngleRad)
   const sin = Math.sin(maxAngleRad) * sign
-  vec3.set(out, direction[0] * cos - direction[1] * sin, direction[0] * sin + direction[1] * cos, 0)
+  vec3.set(
+    out,
+    normalizedDir[0] * cos - normalizedDir[1] * sin,
+    normalizedDir[0] * sin + normalizedDir[1] * cos,
+    0,
+  )
 
-  // Finally, scale back to match original acceleration
+  // Finally, scale to match acceleration
   vec3.scale(out, out, vec3.length(acceleration))
 }

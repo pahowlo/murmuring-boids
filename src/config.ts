@@ -4,9 +4,9 @@ export interface BoidConfig {
   maxTurnAngleDeg: number
   acceleration: {
     meetObjective: number
-    // cohesion: number
-    // alignment: number
-    // separation: number
+    cohesion: number
+    alignment: number
+    separation: number
     gravity: number
   }
 }
@@ -23,5 +23,10 @@ export interface RendererConfig {
 }
 
 export interface SimulationConfig {
-  grid: { cellSize: { x: number; y: number } }
+  grid: {
+    neighborDistance: number
+    closeNeighborDistance: number
+    maxNeighborCount: number
+    cellSize: { x: number; y: number }
+  }
 }

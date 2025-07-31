@@ -15,7 +15,10 @@ export class Box {
 
   equals(o: Box): boolean {
     return (
-      this.start.x === o.start.x && this.start.y === o.start.y && this.width === o.width && this.height === o.height
+      this.start.x === o.start.x &&
+      this.start.y === o.start.y &&
+      this.width === o.width &&
+      this.height === o.height
     )
   }
 }
@@ -28,19 +31,16 @@ export class FlightZone {
   private canvasBox: Box
 
   constructor(canvasBox: Box, paddingRatio: number = 0.15) {
-    const canvasPadding = {
-      x: canvasBox.width * paddingRatio,
-      y: canvasBox.height * paddingRatio,
-    }
+    const padding = Math.min(canvasBox.width * paddingRatio, canvasBox.height * paddingRatio)
     this.polygon = [
       // left-top
-      vec3.fromValues(canvasBox.start.x + canvasPadding.x, canvasBox.start.y + canvasPadding.y, 0),
+      vec3.fromValues(canvasBox.start.x + padding, canvasBox.start.y + padding, 0),
       // right-top
-      vec3.fromValues(canvasBox.end.x - canvasPadding.x, canvasBox.start.y + canvasPadding.y, 0),
+      vec3.fromValues(canvasBox.end.x - padding, canvasBox.start.y + padding, 0),
       // right-bottom
-      vec3.fromValues(canvasBox.end.x - canvasPadding.x, canvasBox.end.y - canvasPadding.y, 0),
+      vec3.fromValues(canvasBox.end.x - padding, canvasBox.end.y - padding, 0),
       // left-bottom
-      vec3.fromValues(canvasBox.start.x + canvasPadding.x, canvasBox.end.y - canvasPadding.y, 0),
+      vec3.fromValues(canvasBox.start.x + padding, canvasBox.end.y - padding, 0),
     ]
     this.centroids = [this.getCenter()]
 
@@ -62,8 +62,12 @@ export class FlightZone {
   resize(newCanvasBox: Box): void {
     if (this.canvasBox.equals(newCanvasBox)) return // No resize required
 
-    const scaleX = newCanvasBox.width === this.canvasBox.width ? 1 : newCanvasBox.width / this.canvasBox.width
-    const scaleY = newCanvasBox.height === this.canvasBox.height ? 1 : newCanvasBox.height / this.canvasBox.height
+    const scaleX =
+      newCanvasBox.width === this.canvasBox.width ? 1 : newCanvasBox.width / this.canvasBox.width
+    const scaleY =
+      newCanvasBox.height === this.canvasBox.height
+        ? 1
+        : newCanvasBox.height / this.canvasBox.height
 
     // Polygon
     for (const point of this.polygon) {

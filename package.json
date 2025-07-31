@@ -10,9 +10,10 @@
   "dependencies": {
     "gl-matrix": "^3.4.3"
   },
+  "packageManager": "pnpm@10.14.0",
   "scripts": {
     "build": "./.scripts/build",
-    "clean": "rm -rf node_modules/ dist/ target/ pnpm-lock.yaml",
+    "clean": "rm -rf node_modules/ dist/ target/ pnpm-lock.yaml package-lock.json",
     "demo": "vite",
     "format": "prettier --config package.json --write 'src/**/*.{js,ts,json}'",
     "check:fix": "eslint src/ --fix",
@@ -20,7 +21,7 @@
     "test": "jest"
   },
   "prettier": {
-    "printWidth": 120,
+    "printWidth": 100,
     "semi": false,
     "singleQuote": false
   },

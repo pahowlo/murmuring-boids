@@ -47,7 +47,11 @@ export class Renderer {
 
   private boidPath: Path2D = setupBoidPath()
 
-  constructor(window: Window, canvas: HTMLCanvasElement, rendererConfig: Partial<RendererConfig> = {}) {
+  constructor(
+    window: Window,
+    canvas: HTMLCanvasElement,
+    rendererConfig: Partial<RendererConfig> = {},
+  ) {
     this.window = window
     this.canvas = canvas
 
@@ -117,7 +121,7 @@ export class Renderer {
     this.canvas.width = displayWidth * this.devicePixelRatio
     this.canvas.height = displayHeight * this.devicePixelRatio
 
-    // Updating canvas width/height resets rendering context (inc. scaling) 
+    // Updating canvas width/height resets rendering context (inc. scaling)
     // thus no risk of compounding
     // Scale rendering
     ctx.scale(this.devicePixelRatio, this.devicePixelRatio)
@@ -126,7 +130,7 @@ export class Renderer {
   clearCanvas(): void {
     const ctx = this.renderingContext
 
-    // Updating canvas width/height resets rendering context (inc. scaling) 
+    // Updating canvas width/height resets rendering context (inc. scaling)
     ctx.canvas.width = ctx.canvas.width
     // Scale rendering
     ctx.scale(this.devicePixelRatio, this.devicePixelRatio)
