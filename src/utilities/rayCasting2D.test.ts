@@ -4,9 +4,9 @@ import { isInPolygon } from "./rayCasting2D"
 import { scenarios } from "./__tests___/rayCasting2D/scenarios"
 
 describe("Polygon scenarios", () => {
-  scenarios.forEach((scenario, idx) => {
+  for (const [idx, scenario] of scenarios.entries()) {
     describe(`Scenario #${idx + 1}`, () => {
-      scenario.points.forEach((pt, ptIdx) => {
+      for (const [ptIdx, pt] of scenario.points.entries()) {
         const position = vec2.fromValues(pt.coord[0], pt.coord[1])
         const polygon = scenario.polygon.map((coord) => vec2.fromValues(coord[0], coord[1]))
 
@@ -14,7 +14,7 @@ describe("Polygon scenarios", () => {
           const result = isInPolygon(position, polygon)
           expect(result).toBe(pt.isInPolygon)
         })
-      })
+      }
     })
-  })
+  }
 })

@@ -3,11 +3,34 @@ import { Boid } from "./Boid"
 import { FlightZone, Box } from "./FlightZone"
 
 export const defaultRendererConfig: RendererConfig = {
-  backgroundColor: "#212121",
   clearCanvasIfResized: true,
+  boids: {
+    lineWidth: 0.1,
+    size: 4,
+  },
   debug: {
     flightZoneColor: "#00ff00",
   },
+}
+
+function setupBoidPath(): Path2D {
+  const boidPath = new Path2D()
+  const size = 1
+  // Wing triangle
+  boidPath.moveTo(-size * 0.5, size * 0.3)
+  boidPath.lineTo(size, 0) // Nose
+  boidPath.lineTo(-size * 0.5, -size * 0.3)
+
+  // Bottom
+  boidPath.moveTo(-size * 0.5, size * 0.3)
+  boidPath.lineTo(-size * 0.5, -size * 0.3)
+  //boidPath.closePath() // Left wing
+
+  // Fold (center line)
+  boidPath.moveTo(size, 0) // Nose
+  boidPath.lineTo(-size * 0.5, 0)
+
+  return boidPath
 }
 
 // Main class
@@ -16,11 +39,13 @@ export class Renderer {
   private canvas: HTMLCanvasElement
   private renderingContext: CanvasRenderingContext2D
 
-  private rendererConfig: RendererConfig
+  private config: RendererConfig
 
   screenBox: Box
   canvasBox: Box
   private devicePixelRatio: number
+
+  private boidPath: Path2D = setupBoidPath()
 
   constructor(window: Window, canvas: HTMLCanvasElement, rendererConfig: Partial<RendererConfig> = {}) {
     this.window = window
@@ -30,13 +55,13 @@ export class Renderer {
     if (!ctx) throw new Error("Canvas context not available")
     this.renderingContext = ctx
 
-    this.rendererConfig = {
+    this.config = {
       ...defaultRendererConfig,
       ...rendererConfig,
     }
 
     this.screenBox = new Box(0, 0, this.window.screen.width, this.window.screen.height)
-    this.devicePixelRatio = 1
+    this.devicePixelRatio = this.window.devicePixelRatio || 1
 
     const r = this.canvas.getBoundingClientRect()
     this.canvasBox = new Box(
@@ -67,12 +92,12 @@ export class Renderer {
     )
 
     if (this.canvasBox.equals(newCanvasBox) && this.devicePixelRatio === newdevicePixelRatio) {
-      // No resize required
-      return false
+      return false // No resize required
     }
 
-    if (this.rendererConfig.clearCanvasIfResized) {
-      this.clearCanvas() // Start clean
+    if (this.config.clearCanvasIfResized) {
+      // Start clean
+      this.clearCanvas()
     }
     // Redraw canvas to match new display settings
     this.devicePixelRatio = newdevicePixelRatio
@@ -82,8 +107,6 @@ export class Renderer {
   }
 
   private scaleCanvas(): void {
-    this.canvas.style.backgroundColor = this.rendererConfig.backgroundColor
-
     // Fetch canvas CSS pixel size
     const displayWidth = this.canvas.clientWidth
     const displayHeight = this.canvas.clientHeight
@@ -111,7 +134,7 @@ export class Renderer {
     const ctx = this.renderingContext
     ctx.save()
 
-    ctx.strokeStyle = this.rendererConfig.debug.flightZoneColor
+    ctx.strokeStyle = this.config.debug.flightZoneColor
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(flightZone.polygon[0][0] - startX, flightZone.polygon[0][1] - startY)
@@ -121,7 +144,7 @@ export class Renderer {
     ctx.closePath()
     ctx.stroke()
 
-    ctx.fillStyle = this.rendererConfig.debug.flightZoneColor
+    ctx.fillStyle = this.config.debug.flightZoneColor
     ctx.beginPath()
     for (const point of flightZone.centroids) {
       ctx.arc(point[0] - startX, point[1] - startY, 2, 0, 2 * Math.PI)
@@ -135,7 +158,6 @@ export class Renderer {
   drawBoid(boid: Boid, maxDepth: number): void {
     const pos = boid.getPosition()
     const vel = boid.getVelocity()
-    const size = boid.getSize()
 
     const startX = this.canvasBox.start.x
     const startY = this.canvasBox.start.y
@@ -144,21 +166,12 @@ export class Renderer {
     ctx.save()
 
     ctx.translate(pos[0] - startX, pos[1] - startY)
-    const angle = Math.atan2(vel[1], vel[0])
-    ctx.rotate(angle)
+    ctx.rotate(Math.atan2(vel[1], vel[0]))
+    ctx.scale(this.config.boids.size, this.config.boids.size)
 
     ctx.strokeStyle = `hsl(10, 10%, ${Math.max(10, 100 - (pos[2] / maxDepth) * 80)}%)`
-    ctx.beginPath()
-    // Define triangle
-    ctx.moveTo(size, 0) // Nose
-    ctx.lineTo(-size * 0.5, size * 0.3) // Right wing
-    ctx.lineTo(-size * 0.5, -size * 0.3) // Left wing
-    // Define center line (fold)
-    ctx.moveTo(size, 0) // Nose
-    ctx.lineTo(-size * 0.5, 0) // Tail center
-    // Draw
-    ctx.closePath()
-    ctx.stroke()
+    ctx.lineWidth = this.config.boids.lineWidth
+    ctx.stroke(this.boidPath)
 
     ctx.restore()
   }

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   // Use ts-jest preset for TypeScript support
   preset: "ts-jest",
 
@@ -10,7 +10,12 @@ module.exports = {
 
   // How to transform files before testing (using ts-jest to compile TypeScript)
   transform: {
-    "^.+\\.ts$": "ts-jest",
+    "^.+\\.ts$": [
+      "ts-jest",
+      {
+        useESM: true,
+      },
+    ],
   },
 
   // Coverage reports

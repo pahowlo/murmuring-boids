@@ -1,18 +1,27 @@
 export interface BoidConfig {
-  size: number
   minSpeed: number
   maxSpeed: number
   maxTurnAngleDeg: number
   acceleration: {
     meetObjective: number
+    // cohesion: number
+    // alignment: number
+    // separation: number
     gravity: number
   }
 }
 
 export interface RendererConfig {
-  backgroundColor: string
   clearCanvasIfResized: boolean
+  boids: {
+    lineWidth: number
+    size: number
+  }
   debug: {
     flightZoneColor: string
   }
+}
+
+export interface SimulationConfig {
+  grid: { cellSize: { x: number; y: number } }
 }

@@ -11,7 +11,9 @@
     // Strict type checking
     "strict": true,
     // Don't check third-party libraries
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    // No CommonJS import style crap
+    "verbatimModuleSyntax": false
   },
 
   // Files to compile

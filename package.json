@@ -4,6 +4,7 @@
   "author": "pahowlo <paul.legoux@gmail.com>",
   "license": "",
   "description": "A JS component for rendering an interactive murmuring boids animation.",
+  "type": "module",
   "main": "./src/main.ts",
   "exports": "./src/main.ts",
   "dependencies": {

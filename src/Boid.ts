@@ -5,15 +5,21 @@ import { limitTurn } from "./utilities/constraints"
 import { isInPolygon } from "./utilities/rayCasting2D"
 
 export const defaultBoidConfig: BoidConfig = {
-  size: 5,
   minSpeed: 1,
   maxSpeed: 6,
   maxTurnAngleDeg: 120,
-  acceleration: { meetObjective: 1.5, gravity: 0.05 },
+  acceleration: {
+    meetObjective: 1.5,
+    // cohesion: 0.1,
+    // alignment: 0.1,
+    // separation: 0.1,
+    gravity: 0.05, // Positive since (0, 0) is the top left corner
+  },
 }
 
 // Main class
 export class Boid {
+  readonly displayId: number
   private position: vec3
   private velocity: vec3
   private acceleration: vec3
@@ -25,7 +31,8 @@ export class Boid {
     remainingTicks: number
   }
 
-  constructor(position: vec3, boidConfig: Partial<BoidConfig> = {}) {
+  constructor(displayId: number, position: vec3, boidConfig: Partial<BoidConfig> = {}) {
+    this.displayId = displayId
     this.config = {
       ...boidConfig,
       ...defaultBoidConfig,
@@ -38,23 +45,19 @@ export class Boid {
   }
 
   getPosition(): vec3 {
-    return this.position
+    return vec3.clone(this.position)
   }
 
   getVelocity(): vec3 {
-    return this.velocity
+    return vec3.clone(this.velocity)
   }
 
-  getSize(): number {
-    return this.config.size
-  }
+  update(neighbors: Boid[], closeNeighbors: Boid[], polygon: vec3[], centroids: vec3[]): void {
+    // Init self acceleration. Basically where little birdie wants to go
+    const selfAcceleration = vec3.create()
 
-  update(neighbors: Boid[], polygon: vec3[], centroids: vec3[]): void {
-    // Reset acceleration
-    this.acceleration = vec3.fromValues(0, this.config.acceleration.gravity, 0)
-
-    // Simple boundary check
-    if (!isInPolygon(this.position, polygon) && !this.objective) {
+    // If no objective is set, perform boundary check
+    if (!this.objective && !isInPolygon(this.position, polygon)) {
       let turnBackDirection = vec3.create()
       let maxDist = 0
       for (const point of centroids) {
@@ -74,25 +77,52 @@ export class Boid {
     }
 
     if (this.objective) {
-      const steering = limitTurn(this.velocity, this.objective.direction, this.config.maxTurnAngleDeg)
-      vec3.normalize(steering, steering)
-      vec3.scale(steering, steering, this.config.acceleration.meetObjective)
-
-      vec3.add(this.acceleration, this.acceleration, steering)
-
       this.objective.remainingTicks -= 1
       if (this.objective.remainingTicks <= 0) {
         this.objective = undefined
+      } else {
+        // Move towards objective}
+        const steering = vec3.copy(vec3.create(), this.objective.direction)
+        vec3.normalize(steering, steering)
+        vec3.scale(steering, steering, this.config.acceleration.meetObjective)
+
+        vec3.add(selfAcceleration, selfAcceleration, steering)
       }
     }
+
+    // // Cohesion and alignment
+    // for (const neighbor of neighbors) {
+    //   // Cohesion: Move towards the average position of neighbors
+    //   const diff = vec3.subtract(vec3.create(), this.position, neighbor.getPosition())
+    //   diff[2] = 0 // Keep it 2D
+    //   const dist = vec3.length(diff)
+    //   if (dist == 0) {
+    //     continue
+    //   }
+    //   vec3.scale(diff, diff, this.config.acceleration.separation)
+    //   vec3.add(this.acceleration, this.acceleration, diff)
+
+    //   // Alignment: Move towards the average velocity of neighbors
+    //   vec3.add(this.acceleration, this.acceleration, neighbor.getVelocity())
+    //   vec3.scale(this.acceleration, this.acceleration, this.config.acceleration.alignment)
+    //   vec3.add(this.acceleration, this.acceleration, this.velocity)
+    // }
+
+    // Reset acceleration with truncated self acceleration
+    limitTurn(this.acceleration, this.velocity, selfAcceleration, this.config.maxTurnAngleDeg)
+
+    this.acceleration[1] += this.config.acceleration.gravity // Apply gravity
+    this.acceleration[2] = 0 // Keep it 2D
 
     // Update velocity
     vec3.add(this.velocity, this.velocity, this.acceleration)
 
     if (vec3.length(this.velocity) > this.config.maxSpeed) {
+      // Normalize to max speed if too fast
       vec3.normalize(this.velocity, this.velocity)
       vec3.scale(this.velocity, this.velocity, this.config.maxSpeed)
     } else if (vec3.length(this.velocity) < this.config.minSpeed) {
+      // Normalize to min speed if too slow
       vec3.normalize(this.velocity, this.velocity)
       vec3.scale(this.velocity, this.velocity, this.config.minSpeed)
     }
