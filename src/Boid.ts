@@ -2,17 +2,16 @@ import { vec3 } from "gl-matrix"
 
 import type { BoidConfig } from "./config"
 import { limitTurn } from "./utilities/constraints"
-import { isInPolygon } from "./utilities/rayCasting2D"
 
 export const defaultBoidConfig: BoidConfig = {
   minSpeed: 1,
   maxSpeed: 6,
   maxTurnAngleDeg: 120,
   acceleration: {
-    meetObjective: 1.5,
-    cohesion: 0.5,
-    alignment: 0.5,
-    separation: 0.9,
+    meetObjective: 0.6,
+    cohesion: 0.6,
+    alignment: 1,
+    separation: 1.2,
     gravity: 0.05, // Positive since (0, 0) is the top left corner
   },
 }
@@ -60,6 +59,7 @@ export class Boid {
     neighbors: Boid[],
     closeNeighbors: Boid[],
     cellSize: vec3,
+    IsOutsideFlightZone: (pos: vec3) => boolean,
     polygon: vec3[],
     centroids: vec3[],
   ): void {
@@ -67,22 +67,19 @@ export class Boid {
     const selfAcceleration = vec3.create()
 
     // If no objective is set, perform boundary check
-    if (!this.objective && !isInPolygon(this.position, polygon)) {
-      let turnBackDirection = vec3.create()
-      let maxDist = 0
-      for (const point of centroids) {
-        const diff = vec3.subtract(vec3.create(), point, this.position)
-        const dist = Math.abs(diff[0]) + Math.abs(diff[1])
-        if (dist > maxDist) {
-          maxDist = dist
-          turnBackDirection = diff
-        }
+    if (!this.objective && IsOutsideFlightZone(this.position)) {
+      const turnBackDirection = vec3.create()
+      for (const point of centroids.length > 0 ? centroids : polygon) {
+        vec3.add(
+          turnBackDirection,
+          turnBackDirection,
+          vec3.subtract(vec3.create(), point, this.position),
+        )
       }
-      turnBackDirection[2] = 0 // Keep it 2D
       vec3.normalize(turnBackDirection, turnBackDirection)
       this.objective = {
         direction: turnBackDirection,
-        remainingTicks: 30,
+        remainingTicks: 10,
       }
     }
 
@@ -104,11 +101,9 @@ export class Boid {
     for (const neighbor of neighbors) {
       // Cohesion: Move towards the average position of neighbors
       const cohesionDir = vec3.subtract(vec3.create(), neighbor.getPosition(), this.position)
-      cohesionDir[2] = 0 // Keep it 2D
       vec3.add(cohesion, cohesion, cohesionDir)
 
       const alignmentDir = neighbor.getVelocity()
-      alignmentDir[2] = 0 // Keep it 2D
       vec3.add(alignment, alignment, alignmentDir)
     }
     vec3.normalize(cohesion, cohesion)
@@ -124,7 +119,6 @@ export class Boid {
     const cellRadius = Math.max(cellSize[0], cellSize[1], cellSize[2])
     for (const neighbor of closeNeighbors) {
       const separationDir = vec3.subtract(vec3.create(), this.position, neighbor.getPosition())
-      separationDir[2] = 0 // Keep it 2D
       const dist = vec3.length(separationDir)
       if (dist === 0) continue // Skip superposed neighbors
 
@@ -140,7 +134,6 @@ export class Boid {
     limitTurn(this.acceleration, this.velocity, selfAcceleration, this.config.maxTurnAngleDeg)
 
     this.acceleration[1] += this.config.acceleration.gravity // Apply gravity
-    this.acceleration[2] = 0 // Keep it 2D
 
     // Update velocity
     vec3.add(this.velocity, this.velocity, this.acceleration)

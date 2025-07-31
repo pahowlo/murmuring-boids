@@ -6,7 +6,7 @@ export const defaultRendererConfig: RendererConfig = {
   clearCanvasIfResized: true,
   boids: {
     lineWidth: 0.1,
-    size: 4,
+    size: 3,
   },
   debug: {
     flightZoneColor: "#00ff00",
@@ -171,14 +171,23 @@ export class Renderer {
     const startX = this.canvasBox.start.x
     const startY = this.canvasBox.start.y
 
+    const depthRatio = Math.min(1.125, Math.max(-0.125, pos[2] / maxDepth))
+
+    let boidSize = this.config.boids.size
+    if (depthRatio < 0) {
+      boidSize += -depthRatio * 8 // [0, 1]
+    } else if (depthRatio > 1) {
+      boidSize -= (depthRatio - 1) * 8 // [-1, 0]
+    }
+
     const ctx = this.renderingContext
     ctx.save()
 
     ctx.translate(pos[0] - startX, pos[1] - startY)
     ctx.rotate(Math.atan2(vel[1], vel[0]))
-    ctx.scale(this.config.boids.size, this.config.boids.size)
+    ctx.scale(boidSize, boidSize)
 
-    ctx.strokeStyle = `hsl(10, 10%, ${Math.max(10, 100 - (pos[2] / maxDepth) * 80)}%)`
+    ctx.strokeStyle = `hsl(10, 10%, ${Math.max(10, 90 - depthRatio * 80)}%)`
     ctx.lineWidth = this.config.boids.lineWidth
     ctx.stroke(this.boidPath)
 

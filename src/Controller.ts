@@ -3,8 +3,6 @@ import { FlightZone } from "./FlightZone"
 import { Renderer } from "./Renderer"
 import { Simulation } from "./Simulation"
 
-export const maxDepth = 500
-
 export class Controller {
   private renderer: Renderer
   private flightZone: FlightZone
@@ -22,8 +20,8 @@ export class Controller {
     rendererConfig: Partial<RendererConfig> = {},
   ) {
     this.renderer = new Renderer(window, canvas, rendererConfig)
-    this.flightZone = new FlightZone(this.renderer.canvasBox)
-    this.simulation = new Simulation(this.renderer.screenBox, maxDepth)
+    this.simulation = new Simulation(this.renderer.screenBox)
+    this.flightZone = new FlightZone(this.renderer.canvasBox, this.simulation.maxDepth())
   }
 
   start(boidCount: number, debug: boolean, boidConfig: Partial<BoidConfig> = {}): void {
@@ -52,7 +50,7 @@ export class Controller {
     }
 
     this.simulation.boids.forEach((boid) => {
-      this.renderer.drawBoid(boid, maxDepth)
+      this.renderer.drawBoid(boid, this.simulation.maxDepth())
     })
 
     this.animationId = requestAnimationFrame(this.animationLoop)
@@ -73,9 +71,9 @@ export class Controller {
   }
 
   stop(): void {
-    if (this.resizeTimeoutId) {
-      cancelAnimationFrame(this.resizeTimeoutId)
-      this.resizeTimeoutId = null
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId)
+      this.animationId = null
     }
     if (this.resizeTimeoutId) {
       clearTimeout(this.resizeTimeoutId)
