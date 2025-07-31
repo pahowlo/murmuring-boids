@@ -11,11 +11,16 @@
       height: 100%;
       margin: 0;
       padding: 0;
+      background-color: #212121;
     }
-    body,
-    #canvas {
+    canvas {
       display: block;
-      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background-color: transparent !important; /* Ensure the canvas is transparent */
     }
   </style>
   <body>
@@ -26,7 +31,7 @@
       const canvas = document.getElementById("canvas")
 
       const background = new MurmuringBoidsBackground(window, canvas)
-      background.start(1500, true)
+      background.start(4000, true)
     </script>
   </body>
 </html>
