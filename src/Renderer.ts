@@ -107,24 +107,29 @@ export class Renderer {
   }
 
   private scaleCanvas(): void {
-    // Fetch canvas CSS pixel size
+    const ctx = this.renderingContext
+
+    // Fetch canvas CSS pixel dimensions
     const displayWidth = this.canvas.clientWidth
     const displayHeight = this.canvas.clientHeight
 
-    // Update canvas real pixel size to match device DPI
+    // Update canvas real pixel dimensions to match device DPI
     this.canvas.width = displayWidth * this.devicePixelRatio
     this.canvas.height = displayHeight * this.devicePixelRatio
 
+    // Updating canvas width/height resets rendering context (inc. scaling) 
+    // thus no risk of compounding
     // Scale rendering
-    const ctx = this.renderingContext
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0)
     ctx.scale(this.devicePixelRatio, this.devicePixelRatio)
   }
 
   clearCanvas(): void {
     const ctx = this.renderingContext
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+
+    // Updating canvas width/height resets rendering context (inc. scaling) 
+    ctx.canvas.width = ctx.canvas.width
+    // Scale rendering
+    ctx.scale(this.devicePixelRatio, this.devicePixelRatio)
   }
 
   drawFlightZone(flightZone: FlightZone): void {
