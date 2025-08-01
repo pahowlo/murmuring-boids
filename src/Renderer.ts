@@ -43,7 +43,9 @@ export class Renderer {
 
   screenBox: Box
   canvasBox: Box
+  maxHeight: number
   private devicePixelRatio: number
+  private screenHasTopLeft: boolean = false
 
   private boidPath: Path2D = setupBoidPath()
 
@@ -64,36 +66,31 @@ export class Renderer {
       ...rendererConfig,
     }
 
-    this.screenBox = new Box(0, 0, this.window.screen.width, this.window.screen.height)
+    this.screenBox = this.getScreenBox()
+    this.canvasBox = this.getCanvasBox()
     this.devicePixelRatio = this.window.devicePixelRatio || 1
 
-    const r = this.canvas.getBoundingClientRect()
-    this.canvasBox = new Box(
-      this.window.screenX + (this.window.outerWidth - this.window.innerWidth) + r.left,
-      this.window.screenY + (this.window.outerHeight - this.window.innerHeight) + r.top,
-      r.width,
-      r.height,
-    )
-
+    this.maxHeight = this.getMaxHeight()
     this.scaleCanvas()
+  }
+
+  private getMaxHeight(): number {
+    if (this.screenHasTopLeft) {
+      return this.screenBox.end.y - 20
+    }
+    return Math.max(this.canvasBox.end.y, this.screenBox.end.y) - 20
   }
 
   /**
    * Return true if a change was detected in display settings that lead to resizing the canvas.
    */
   checkResize(): boolean {
-    this.screenBox = new Box(0, 0, this.window.screen.width, this.window.screen.height)
+    this.screenBox = this.getScreenBox()
 
     // Check if display settings have changed
     const newdevicePixelRatio = this.window.devicePixelRatio || 1
 
-    const r = this.canvas.getBoundingClientRect()
-    const newCanvasBox = new Box(
-      this.window.screenX + (this.window.outerWidth - this.window.innerWidth) + r.left,
-      this.window.screenY + (this.window.outerHeight - this.window.innerHeight) + r.top,
-      r.width,
-      r.height,
-    )
+    const newCanvasBox = this.getCanvasBox()
 
     if (this.canvasBox.equals(newCanvasBox) && this.devicePixelRatio === newdevicePixelRatio) {
       return false // No resize required
@@ -106,8 +103,38 @@ export class Renderer {
     // Redraw canvas to match new display settings
     this.devicePixelRatio = newdevicePixelRatio
     this.canvasBox = newCanvasBox
+
+    this.maxHeight = this.getMaxHeight()
     this.scaleCanvas()
     return true
+  }
+
+  private getScreenBox(): Box {
+    let screenLeft = 0
+    let screenTop = 0
+    if (
+      "left" in this.window.screen &&
+      "top" in this.window.screen &&
+      typeof this.window.screen.left === "number" &&
+      typeof this.window.screen.top === "number"
+    ) {
+      this.screenHasTopLeft = true
+      screenLeft = this.window.screen.left
+      screenTop = this.window.screen.top
+    } else {
+      this.screenHasTopLeft = false
+    }
+    return new Box(screenLeft, screenTop, this.window.screen.width, this.window.screen.height)
+  }
+
+  private getCanvasBox(): Box {
+    const r = this.canvas.getBoundingClientRect()
+    return new Box(
+      this.window.screenX + (this.window.outerWidth - this.window.innerWidth) + r.left,
+      this.window.screenY + (this.window.outerHeight - this.window.innerHeight) + r.top,
+      r.width,
+      r.height,
+    )
   }
 
   private scaleCanvas(): void {

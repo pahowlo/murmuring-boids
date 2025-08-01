@@ -41,7 +41,8 @@ export class Controller {
     if (!this.isRunning) return
 
     // Update simulation
-    this.simulation.update(this.flightZone)
+    const maxHeight = this.renderer.maxHeight
+    this.simulation.update(this.flightZone, maxHeight)
 
     // Draw
     this.renderer.clearCanvas() // Start clean

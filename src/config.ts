@@ -3,7 +3,8 @@ export interface BoidConfig {
   maxSpeed: number
   maxTurnAngleDeg: number
   acceleration: {
-    meetObjective: number
+    backToFlightZone: number
+    pullUpTerrain: number
     cohesion: number
     alignment: number
     separation: number
