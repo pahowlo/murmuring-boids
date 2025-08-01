@@ -57,7 +57,7 @@ export class Simulation {
     for (let _ = 0; _ < this.maxBoidCount; _++) {
       const position = vec3.fromValues(
         this.simBox.start.x + this.simBox.width * (Math.random() * 1.4 - 0.2),
-        this.simBox.start.y + this.simBox.height * (Math.random() * 1.4 - 0.2),
+        this.simBox.start.y + this.simBox.height * (Math.random() * 1.2 - 0.2) - 20,
         Math.random() * this.config.maxDepth,
       )
       const boid = new Boid(this.nextDisplayId, position, this.boidConfig)
@@ -69,7 +69,7 @@ export class Simulation {
     this.isRunning = true
   }
 
-  update(flightZone: FlightZone): void {
+  update(flightZone: FlightZone, maxHeight: number): void {
     if (!this.isRunning) return
 
     for (const boid of this.boids) {
@@ -91,6 +91,7 @@ export class Simulation {
         (pos: vec3) => flightZone.isOutside(pos),
         flightZone.polygon,
         flightZone.centroids,
+        maxHeight,
       )
       this.spatialGrid.update(boid)
     }

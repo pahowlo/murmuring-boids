@@ -8,7 +8,8 @@ export const defaultBoidConfig: BoidConfig = {
   maxSpeed: 6,
   maxTurnAngleDeg: 120,
   acceleration: {
-    meetObjective: 0.6,
+    backToFlightZone: 0.6,
+    pullUpTerrain: 1,
     cohesion: 0.6,
     alignment: 1,
     separation: 1.2,
@@ -25,7 +26,7 @@ export class Boid {
 
   private config: BoidConfig
 
-  private objective?: {
+  private backToFlightZone?: {
     direction: vec3
     remainingTicks: number
   }
@@ -62,12 +63,25 @@ export class Boid {
     IsOutsideFlightZone: (pos: vec3) => boolean,
     polygon: vec3[],
     centroids: vec3[],
+    maxHeight: number,
   ): void {
-    // Init self acceleration. Basically where little birdie wants to go
+    let maxTurnAngleDeg = this.config.maxTurnAngleDeg
+    let maxSpeed = this.config.maxSpeed
+    let pullUpTerrain = false
+
     const selfAcceleration = vec3.create()
 
-    // If no objective is set, perform boundary check
-    if (!this.objective && IsOutsideFlightZone(this.position)) {
+    // Pull up if low terrain
+    if (this.position[1] >= maxHeight) {
+      selfAcceleration[1] = -this.config.acceleration.pullUpTerrain
+      // Allow more freedom to pull up
+      maxTurnAngleDeg += 20
+      maxSpeed += 1
+      pullUpTerrain = true
+    }
+
+    // Boundary check: Get back to flight zone if outside
+    if (!this.backToFlightZone && IsOutsideFlightZone(this.position)) {
       const turnBackDirection = vec3.create()
       for (const point of centroids.length > 0 ? centroids : polygon) {
         vec3.add(
@@ -77,44 +91,48 @@ export class Boid {
         )
       }
       vec3.normalize(turnBackDirection, turnBackDirection)
-      this.objective = {
+      this.backToFlightZone = {
         direction: turnBackDirection,
-        remainingTicks: 10,
+        remainingTicks: 20,
       }
     }
 
-    if (this.objective && this.objective.remainingTicks > 0) {
-      this.objective.remainingTicks -= 1
-      // Move towards objective
-      const steering = vec3.copy(vec3.create(), this.objective.direction)
+    if (this.backToFlightZone && this.backToFlightZone.remainingTicks > 0) {
+      // Get back to flight zone
+      const steering = vec3.copy(vec3.create(), this.backToFlightZone.direction)
       vec3.normalize(steering, steering)
-      vec3.scale(steering, steering, this.config.acceleration.meetObjective)
+      vec3.scale(steering, steering, this.config.acceleration.backToFlightZone)
 
       vec3.add(selfAcceleration, selfAcceleration, steering)
-    } else {
-      this.objective = undefined
+      this.backToFlightZone.remainingTicks -= 1
+
+      if (this.backToFlightZone.remainingTicks <= 0) {
+        this.backToFlightZone = undefined
+      }
     }
 
-    // Cohesion and alignment
-    const alignment = vec3.create()
-    const cohesion = vec3.create()
-    for (const neighbor of neighbors) {
-      // Cohesion: Move towards the average position of neighbors
-      const cohesionDir = vec3.subtract(vec3.create(), neighbor.getPosition(), this.position)
-      vec3.add(cohesion, cohesion, cohesionDir)
+    // Cohesion and alignment: Stay with the flock
+    if (!pullUpTerrain) {
+      const alignment = vec3.create()
+      const cohesion = vec3.create()
+      for (const neighbor of neighbors) {
+        // Cohesion: Move towards the average position of neighbors
+        const cohesionDir = vec3.subtract(vec3.create(), neighbor.getPosition(), this.position)
+        vec3.add(cohesion, cohesion, cohesionDir)
 
-      const alignmentDir = neighbor.getVelocity()
-      vec3.add(alignment, alignment, alignmentDir)
+        const alignmentDir = neighbor.getVelocity()
+        vec3.add(alignment, alignment, alignmentDir)
+      }
+      vec3.normalize(cohesion, cohesion)
+      vec3.scale(cohesion, cohesion, this.config.acceleration.cohesion)
+      vec3.normalize(alignment, alignment)
+      vec3.scale(alignment, alignment, this.config.acceleration.alignment)
+
+      vec3.add(selfAcceleration, selfAcceleration, cohesion)
+      vec3.add(selfAcceleration, selfAcceleration, alignment)
     }
-    vec3.normalize(cohesion, cohesion)
-    vec3.scale(cohesion, cohesion, this.config.acceleration.cohesion)
-    vec3.normalize(alignment, alignment)
-    vec3.scale(alignment, alignment, this.config.acceleration.alignment)
 
-    vec3.add(selfAcceleration, selfAcceleration, cohesion)
-    vec3.add(selfAcceleration, selfAcceleration, alignment)
-
-    // Separation: Avoid close neighbors
+    // Separation: Avoid collisions with neighbors
     const separation = vec3.create()
     const cellRadius = Math.max(cellSize[0], cellSize[1], cellSize[2])
     for (const neighbor of closeNeighbors) {
@@ -131,17 +149,17 @@ export class Boid {
     vec3.add(selfAcceleration, selfAcceleration, separation)
 
     // Reset acceleration with truncated self acceleration
-    limitTurn(this.acceleration, this.velocity, selfAcceleration, this.config.maxTurnAngleDeg)
+    limitTurn(this.acceleration, this.velocity, selfAcceleration, maxTurnAngleDeg)
 
     this.acceleration[1] += this.config.acceleration.gravity // Apply gravity
 
     // Update velocity
     vec3.add(this.velocity, this.velocity, this.acceleration)
 
-    if (vec3.length(this.velocity) > this.config.maxSpeed) {
+    if (vec3.length(this.velocity) > maxSpeed) {
       // Normalize to max speed if too fast
       vec3.normalize(this.velocity, this.velocity)
-      vec3.scale(this.velocity, this.velocity, this.config.maxSpeed)
+      vec3.scale(this.velocity, this.velocity, maxSpeed)
     } else if (vec3.length(this.velocity) < this.config.minSpeed) {
       // Normalize to min speed if too slow
       vec3.normalize(this.velocity, this.velocity)
