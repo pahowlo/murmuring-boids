@@ -4,6 +4,7 @@ export interface BoidConfig {
   maxTurnAngleDeg: number
   acceleration: {
     backToFlightZone: number
+    followCentroids: number
     pullUpTerrain: number
     cohesion: number
     alignment: number
@@ -19,16 +20,22 @@ export interface RendererConfig {
     size: number
   }
   debug: {
-    flightZoneColor: string
+    flightZone: { polygonColor: string; centroidsColor: string }
   }
+}
+
+interface gridDistance {
+  min: number
+  max: number
+  // How many items to consider at most in that area.
+  limitCount?: number
 }
 
 export interface SimulationConfig {
   maxDepth: number
   grid: {
-    neighborDistance: number
-    closeNeighborDistance: number
-    maxNeighborCount: number
     cellSize: { x: number; y: number }
+    neighborDistance: gridDistance
+    closeNeighborDistance: gridDistance
   }
 }

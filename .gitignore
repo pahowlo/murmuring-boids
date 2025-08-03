@@ -44,3 +44,7 @@ target/
 *.bak
 *.backup
 *.old
+
+# Github links
+*.link
+*.link/

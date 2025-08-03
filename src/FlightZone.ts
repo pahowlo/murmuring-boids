@@ -52,6 +52,20 @@ export class FlightZone {
     this.centroids = []
   }
 
+  addCentroid(pointOnCanvas: vec3): void {
+    const point = vec3.clone(pointOnCanvas)
+    point[0] += this.canvasBox.start.x
+    point[1] += this.canvasBox.start.y
+    point[2] = Math.max(0, Math.min(this.maxDepth, point[2]))
+
+    this.centroids.push(point)
+  }
+
+  clearCentroids(): void {
+    // Fast empty list
+    this.centroids.length = 0
+  }
+
   /** Returns true if the position is outside the flight zone
    * defined by its 2D polygon and depth. */
   isOutside(position: vec3): boolean {

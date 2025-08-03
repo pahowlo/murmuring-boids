@@ -1,4 +1,5 @@
 import type { BoidConfig, RendererConfig } from "./config"
+import { MouseInputs } from "./inputs/MouseInputs"
 import { FlightZone } from "./FlightZone"
 import { Renderer } from "./Renderer"
 import { Simulation } from "./Simulation"
@@ -7,6 +8,9 @@ export class Controller {
   private renderer: Renderer
   private flightZone: FlightZone
   private simulation: Simulation
+  private inputs: {
+    mouse: MouseInputs
+  }
 
   private debug: boolean = false
 
@@ -22,6 +26,10 @@ export class Controller {
     this.renderer = new Renderer(window, canvas, rendererConfig)
     this.simulation = new Simulation(this.renderer.screenBox)
     this.flightZone = new FlightZone(this.renderer.canvasBox, this.simulation.maxDepth())
+
+    this.inputs = {
+      mouse: new MouseInputs(canvas),
+    }
   }
 
   start(boidCount: number, debug: boolean, boidConfig: Partial<BoidConfig> = {}): void {
@@ -41,6 +49,11 @@ export class Controller {
     if (!this.isRunning) return
 
     // Update simulation
+    this.flightZone.clearCentroids()
+    if (this.inputs.mouse.isMouseFocused() && this.inputs.mouse.positionOnCanvas) {
+      this.flightZone.addCentroid(this.inputs.mouse.positionOnCanvas)
+    }
+
     const maxHeight = this.renderer.maxHeight
     this.simulation.update(this.flightZone, maxHeight)
 

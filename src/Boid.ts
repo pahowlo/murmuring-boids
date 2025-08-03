@@ -9,7 +9,8 @@ export const defaultBoidConfig: BoidConfig = {
   maxTurnAngleDeg: 120,
   acceleration: {
     backToFlightZone: 0.6,
-    pullUpTerrain: 1,
+    followCentroids: 0.6,
+    pullUpTerrain: 1.8,
     cohesion: 0.6,
     alignment: 1,
     separation: 1.2,
@@ -20,13 +21,17 @@ export const defaultBoidConfig: BoidConfig = {
 // Main class
 export class Boid {
   readonly displayId: number
-  private position: vec3
-  private velocity: vec3
+  position: vec3
+  velocity: vec3
   private acceleration: vec3
 
   private config: BoidConfig
 
   private backToFlightZone?: {
+    direction: vec3
+    remainingTicks: number
+  }
+  private followCentroids?: {
     direction: vec3
     remainingTicks: number
   }
@@ -48,18 +53,10 @@ export class Boid {
     this.acceleration = vec3.create()
   }
 
-  getPosition(): vec3 {
-    return vec3.clone(this.position)
-  }
-
-  getVelocity(): vec3 {
-    return vec3.clone(this.velocity)
-  }
-
   update(
     neighbors: Boid[],
     closeNeighbors: Boid[],
-    cellSize: vec3,
+    cellRadius: number,
     IsOutsideFlightZone: (pos: vec3) => boolean,
     polygon: vec3[],
     centroids: vec3[],
@@ -67,23 +64,22 @@ export class Boid {
   ): void {
     let maxTurnAngleDeg = this.config.maxTurnAngleDeg
     let maxSpeed = this.config.maxSpeed
-    let pullUpTerrain = false
 
-    const selfAcceleration = vec3.create()
+    const boidAcceleration = vec3.create()
 
+    // == Maneuvers
     // Pull up if low terrain
     if (this.position[1] >= maxHeight) {
-      selfAcceleration[1] = -this.config.acceleration.pullUpTerrain
+      boidAcceleration[1] = -this.config.acceleration.pullUpTerrain
       // Allow more freedom to pull up
       maxTurnAngleDeg += 20
       maxSpeed += 1
-      pullUpTerrain = true
     }
 
     // Boundary check: Get back to flight zone if outside
     if (!this.backToFlightZone && IsOutsideFlightZone(this.position)) {
       const turnBackDirection = vec3.create()
-      for (const point of centroids.length > 0 ? centroids : polygon) {
+      for (const point of polygon) {
         vec3.add(
           turnBackDirection,
           turnBackDirection,
@@ -93,66 +89,72 @@ export class Boid {
       vec3.normalize(turnBackDirection, turnBackDirection)
       this.backToFlightZone = {
         direction: turnBackDirection,
-        remainingTicks: 20,
+        remainingTicks: 30,
       }
     }
-
-    if (this.backToFlightZone && this.backToFlightZone.remainingTicks > 0) {
-      // Get back to flight zone
-      const steering = vec3.copy(vec3.create(), this.backToFlightZone.direction)
-      vec3.normalize(steering, steering)
-      vec3.scale(steering, steering, this.config.acceleration.backToFlightZone)
-
-      vec3.add(selfAcceleration, selfAcceleration, steering)
-      this.backToFlightZone.remainingTicks -= 1
-
+    if (this.backToFlightZone) {
+      vec3.scaleAndAdd(
+        boidAcceleration,
+        boidAcceleration,
+        this.backToFlightZone.direction,
+        this.config.acceleration.backToFlightZone,
+      )
+      this.backToFlightZone.remainingTicks--
       if (this.backToFlightZone.remainingTicks <= 0) {
         this.backToFlightZone = undefined
       }
     }
 
-    // Cohesion and alignment: Stay with the flock
-    if (!pullUpTerrain) {
-      const alignment = vec3.create()
-      const cohesion = vec3.create()
-      for (const neighbor of neighbors) {
-        // Cohesion: Move towards the average position of neighbors
-        const cohesionDir = vec3.subtract(vec3.create(), neighbor.getPosition(), this.position)
-        vec3.add(cohesion, cohesion, cohesionDir)
-
-        const alignmentDir = neighbor.getVelocity()
-        vec3.add(alignment, alignment, alignmentDir)
+    // Centroid attraction: Get to centroids if defined
+    if (!this.followCentroids && centroids) {
+      const followDirection = vec3.create()
+      for (const point of centroids) {
+        const diff = vec3.subtract(vec3.create(), point, this.position)
+        const manhattanDist = Math.abs(diff[0]) + Math.abs(diff[1])
+        const manhattanInvDist = 500 - manhattanDist
+        if (manhattanInvDist <= 0) {
+          continue
+        }
+        vec3.scale(diff, diff, manhattanInvDist / manhattanDist)
+        vec3.add(followDirection, followDirection, diff)
       }
-      vec3.normalize(cohesion, cohesion)
-      vec3.scale(cohesion, cohesion, this.config.acceleration.cohesion)
-      vec3.normalize(alignment, alignment)
-      vec3.scale(alignment, alignment, this.config.acceleration.alignment)
-
-      vec3.add(selfAcceleration, selfAcceleration, cohesion)
-      vec3.add(selfAcceleration, selfAcceleration, alignment)
+      vec3.normalize(followDirection, followDirection)
+      this.followCentroids = {
+        direction: followDirection,
+        remainingTicks: 5,
+      }
     }
+    if (this.followCentroids) {
+      vec3.scaleAndAdd(
+        boidAcceleration,
+        boidAcceleration,
+        this.followCentroids.direction,
+        this.config.acceleration.followCentroids,
+      )
+      this.followCentroids.remainingTicks--
+      if (this.followCentroids.remainingTicks <= 0) {
+        this.followCentroids = undefined
+      }
+    }
+
+    // Cohesion and alignment: Stay with the flock
+    vec3.add(boidAcceleration, boidAcceleration, this.cohesionAcceleration(neighbors))
+    vec3.add(boidAcceleration, boidAcceleration, this.alignmentAcceleration(neighbors))
 
     // Separation: Avoid collisions with neighbors
-    const separation = vec3.create()
-    const cellRadius = Math.max(cellSize[0], cellSize[1], cellSize[2])
-    for (const neighbor of closeNeighbors) {
-      const separationDir = vec3.subtract(vec3.create(), this.position, neighbor.getPosition())
-      const dist = vec3.length(separationDir)
-      if (dist === 0) continue // Skip superposed neighbors
+    vec3.add(
+      boidAcceleration,
+      boidAcceleration,
+      this.separationAcceleration(closeNeighbors, cellRadius),
+    )
 
-      vec3.scale(separationDir, separationDir, cellRadius / dist)
-      vec3.add(separation, separation, separationDir)
-    }
-
-    vec3.normalize(separation, separation)
-    vec3.scale(separation, separation, this.config.acceleration.separation)
-    vec3.add(selfAcceleration, selfAcceleration, separation)
-
+    // == Environment
     // Reset acceleration with truncated self acceleration
-    limitTurn(this.acceleration, this.velocity, selfAcceleration, maxTurnAngleDeg)
+    limitTurn(this.acceleration, this.velocity, boidAcceleration, maxTurnAngleDeg)
 
     this.acceleration[1] += this.config.acceleration.gravity // Apply gravity
 
+    // == Update
     // Update velocity
     vec3.add(this.velocity, this.velocity, this.acceleration)
 
@@ -168,5 +170,53 @@ export class Boid {
 
     // Update position
     this.position = vec3.add(this.position, this.position, this.velocity)
+  }
+
+  /**
+   * Acceleration to match direction and speed of nearby neighbors.
+   * To match velocity of the flock.
+   */
+  private alignmentAcceleration(neighbors: Boid[]): vec3 {
+    const alignment = vec3.create()
+    for (const neighbor of neighbors) {
+      vec3.add(alignment, alignment, neighbor.velocity)
+    }
+    vec3.normalize(alignment, alignment)
+    vec3.scale(alignment, alignment, this.config.acceleration.alignment)
+    return alignment
+  }
+
+  /**
+   * Acceleration to move towards the center of mass of the visible boids.
+   * To stay with the flock.
+   */
+  private cohesionAcceleration(visibleFlock: Boid[]): vec3 {
+    const cohesion = vec3.create()
+    for (const neighbor of visibleFlock) {
+      const cohesionDir = vec3.subtract(vec3.create(), neighbor.position, this.position)
+      vec3.add(cohesion, cohesion, cohesionDir)
+    }
+    vec3.normalize(cohesion, cohesion)
+    vec3.scale(cohesion, cohesion, this.config.acceleration.cohesion)
+    return cohesion
+  }
+
+  /**
+   * Get a random position in the flight zone.
+   */
+  private separationAcceleration(closeNeighbors: Boid[], cellRadius: number): vec3 {
+    const separation = vec3.create()
+    for (const neighbor of closeNeighbors) {
+      const separationDir = vec3.subtract(vec3.create(), this.position, neighbor.position)
+      const dist = vec3.length(separationDir)
+      if (dist === 0) continue // Skip superposed neighbors
+
+      vec3.scale(separationDir, separationDir, cellRadius / dist)
+      vec3.add(separation, separation, separationDir)
+    }
+
+    vec3.normalize(separation, separation)
+    vec3.scale(separation, separation, this.config.acceleration.separation)
+    return separation
   }
 }
