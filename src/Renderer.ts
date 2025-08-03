@@ -9,7 +9,10 @@ export const defaultRendererConfig: RendererConfig = {
     size: 3,
   },
   debug: {
-    flightZoneColor: "#00ff00",
+    flightZone: {
+      polygonColor: "#00ff00",
+      centroidsColor: "#0000ff",
+    },
   },
 }
 
@@ -157,8 +160,11 @@ export class Renderer {
   clearCanvas(): void {
     const ctx = this.renderingContext
 
-    // Updating canvas width/height resets rendering context (inc. scaling)
+    // HACK: Updating canvas width/height resets rendering context (inc. scaling)
+    /* eslint-disable no-self-assign */
     ctx.canvas.width = ctx.canvas.width
+    /* eslint-enable no-self-assign */
+
     // Scale rendering
     ctx.scale(this.devicePixelRatio, this.devicePixelRatio)
   }
@@ -170,8 +176,9 @@ export class Renderer {
     const ctx = this.renderingContext
     ctx.save()
 
-    ctx.strokeStyle = this.config.debug.flightZoneColor
-    ctx.lineWidth = 2
+    // Draw flight zone polygon
+    ctx.strokeStyle = this.config.debug.flightZone.polygonColor
+    ctx.lineWidth = 1
     ctx.beginPath()
     ctx.moveTo(flightZone.polygon[0][0] - startX, flightZone.polygon[0][1] - startY)
     for (let i = 1; i < flightZone.polygon.length; i++) {
@@ -180,20 +187,27 @@ export class Renderer {
     ctx.closePath()
     ctx.stroke()
 
-    ctx.fillStyle = this.config.debug.flightZoneColor
+    // Draw centroids
     ctx.beginPath()
+    ctx.strokeStyle = this.config.debug.flightZone.centroidsColor
     for (const point of flightZone.centroids) {
-      ctx.arc(point[0] - startX, point[1] - startY, 2, 0, 2 * Math.PI)
+      const x = point[0] - startX
+      const y = point[1] - startY
+      const radius = 10
+      ctx.arc(x, y, radius, 0, 2 * Math.PI)
+      ctx.moveTo(x - radius, y)
+      ctx.lineTo(x + radius, y)
+      ctx.moveTo(x, y - radius)
+      ctx.lineTo(x, y + radius)
     }
-    ctx.fill()
-    ctx.closePath()
+    ctx.stroke()
 
     ctx.restore()
   }
 
   drawBoid(boid: Boid, maxDepth: number): void {
-    const pos = boid.getPosition()
-    const vel = boid.getVelocity()
+    const pos = boid.position
+    const vel = boid.velocity
 
     const startX = this.canvasBox.start.x
     const startY = this.canvasBox.start.y

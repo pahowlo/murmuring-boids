@@ -1,8 +1,7 @@
 {
   "name": "murmuring-boids",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": "pahowlo <paul.legoux@gmail.com>",
-  "license": "",
   "description": "A JS component for rendering an interactive murmuring boids animation.",
   "type": "module",
   "main": "./src/main.ts",
@@ -26,15 +25,15 @@
     "singleQuote": false
   },
   "devDependencies": {
-    "@eslint/js": "^9.30.1",
+    "@eslint/js": "^9.32.0",
     "@types/jest": "^30.0.0",
-    "eslint": "^9.30.1",
-    "jest": "^30.0.4",
-    "jest-environment-jsdom": "^30.0.4",
+    "eslint": "^9.32.0",
+    "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
     "prettier": "^3.6.2",
-    "ts-jest": "^29.4.0",
-    "typescript": "^5.8.3",
-    "typescript-eslint": "^8.36.0",
-    "vite": "^7.0.4"
+    "ts-jest": "^29.4.1",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.38.0",
+    "vite": "^7.0.6"
   }
 }

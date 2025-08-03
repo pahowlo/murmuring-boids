@@ -8,10 +8,13 @@ import { FlightZone, Box } from "./FlightZone"
 export const defaultSimulationConfig: SimulationConfig = {
   maxDepth: 250,
   grid: {
-    neighborDistance: 2,
-    closeNeighborDistance: 0,
-    maxNeighborCount: 20,
     cellSize: { x: 10, y: 10 },
+    neighborDistance: { min: 1, max: 5, limitCount: 30 },
+    closeNeighborDistance: {
+      min: 0,
+      max: 0,
+      limitCount: 20,
+    },
   },
 }
 
@@ -73,21 +76,16 @@ export class Simulation {
     if (!this.isRunning) return
 
     for (const boid of this.boids) {
-      const neighbors = this.spatialGrid.getNeighbors(
-        boid,
-        this.config.grid.neighborDistance,
-        this.config.grid.maxNeighborCount,
-      )
+      const neighbors = this.spatialGrid.getNeighbors(boid, this.config.grid.neighborDistance)
       const closeNeighbors = this.spatialGrid.getNeighbors(
         boid,
         this.config.grid.closeNeighborDistance,
-        this.config.grid.maxNeighborCount,
       )
 
       boid.update(
         neighbors,
         closeNeighbors,
-        this.spatialGrid.cellSize,
+        this.spatialGrid.cellRadius,
         (pos: vec3) => flightZone.isOutside(pos),
         flightZone.polygon,
         flightZone.centroids,
