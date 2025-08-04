@@ -5,46 +5,42 @@ export class MouseInputs {
 
   positionOnCanvas?: vec3
   private isPressed: boolean = false
-  private isFocused: boolean = true
+  private isMouseOver: boolean = true
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
     // Make canvas focusable
     this.canvas.tabIndex = 0
-    this.setupEventListeners(this.canvas)
+    this.setupEventListeners(canvas)
   }
 
   isMousePressed(): boolean {
-    return this.isPressed
+    return this.isPressed && this.isMouseOver
   }
   isMouseFocused(): boolean {
-    return this.isFocused
+    return this.isMouseOver
   }
-
   private setupEventListeners(canvas: HTMLCanvasElement): void {
-    // Focus
-    canvas.addEventListener("mouseenter", () => {
-      //canvas.focus()
-    })
-
     canvas.addEventListener("focus", () => {
-      this.isFocused = true
+      this.isMouseOver = true
     })
 
-    canvas.addEventListener("blur", () => {
-      this.isFocused = false
-      this.isPressed = false
-      this.positionOnCanvas = undefined
+    canvas.addEventListener("mouseenter", () => {
+      this.isMouseOver = true
+    })
+
+    canvas.addEventListener("mouseover", () => {
+      this.isMouseOver = true
     })
 
     canvas.addEventListener("mouseleave", () => {
-      this.isFocused = false
+      this.isMouseOver = false
       this.isPressed = false
       this.positionOnCanvas = undefined
     })
 
-    // Mouse events
     canvas.addEventListener("mousemove", (event) => {
+      this.isMouseOver = true
       const newPositionOnCanvas = vec3.fromValues(event.clientX, event.clientY, 50)
       this.positionOnCanvas = newPositionOnCanvas
     })
