@@ -1,9 +1,9 @@
 import { vec3 } from "gl-matrix"
 
-export class MouseInputs {
+export class MouseStatus {
   private canvas: HTMLCanvasElement
 
-  positionOnCanvas?: vec3
+  private positionOnCanvas?: vec3
   private isPressed: boolean = false
   private isMouseOver: boolean = true
 
@@ -11,7 +11,7 @@ export class MouseInputs {
     this.canvas = canvas
     // Make canvas focusable
     this.canvas.tabIndex = 0
-    this.setupEventListeners(canvas)
+    this.setupListeners(canvas)
   }
 
   isMousePressed(): boolean {
@@ -20,35 +20,38 @@ export class MouseInputs {
   isMouseFocused(): boolean {
     return this.isMouseOver
   }
-  private setupEventListeners(canvas: HTMLCanvasElement): void {
+
+  getPositionOnCanvas(): vec3 | undefined {
+    if (this.isMouseFocused() && this.positionOnCanvas) {
+      return this.positionOnCanvas
+    }
+    return undefined
+  }
+
+  private setupListeners(canvas: HTMLCanvasElement): void {
     canvas.addEventListener("focus", () => {
       this.isMouseOver = true
     })
-
     canvas.addEventListener("mouseenter", () => {
       this.isMouseOver = true
     })
-
     canvas.addEventListener("mouseover", () => {
       this.isMouseOver = true
     })
-
     canvas.addEventListener("mouseleave", () => {
       this.isMouseOver = false
       this.isPressed = false
       this.positionOnCanvas = undefined
     })
-
-    canvas.addEventListener("mousemove", (event) => {
+    canvas.addEventListener("mousemove", (e) => {
       this.isMouseOver = true
-      const newPositionOnCanvas = vec3.fromValues(event.clientX, event.clientY, 50)
+      const newPositionOnCanvas = vec3.fromValues(e.clientX, e.clientY, 50)
       this.positionOnCanvas = newPositionOnCanvas
     })
 
     canvas.addEventListener("mousedown", () => {
       this.isPressed = true
     })
-
     canvas.addEventListener("mouseup", () => {
       this.isPressed = false
     })

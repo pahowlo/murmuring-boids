@@ -29,29 +29,51 @@ export class Box {
 export class FlightZone {
   private canvasBox: Box
 
+  paddingRatio: number
   maxDepth: number
-  polygon: vec3[]
-  centroids: vec3[]
+  private polygon: vec3[]
+  private centroids: vec3[]
 
   constructor(canvasBox: Box, maxDepth: number, paddingRatio: number = 0.1) {
     this.canvasBox = canvasBox
+    this.paddingRatio = paddingRatio
     this.maxDepth = maxDepth
 
-    const halfDepth = maxDepth / 2
-    const padding = Math.min(canvasBox.width * paddingRatio, canvasBox.height * paddingRatio)
-    this.polygon = [
-      // left-top
-      vec3.fromValues(canvasBox.start.x + padding, canvasBox.start.y + padding, halfDepth),
-      // right-top
-      vec3.fromValues(canvasBox.end.x - padding, canvasBox.start.y + padding, halfDepth),
-      // right-bottom
-      vec3.fromValues(canvasBox.end.x - padding, canvasBox.end.y - padding, halfDepth),
-      // left-bottom
-      vec3.fromValues(canvasBox.start.x + padding, canvasBox.end.y - padding, halfDepth),
-    ]
+    this.polygon = this.defaultPolygon()
     this.centroids = []
   }
 
+  // Polygon
+  private defaultPolygon(): vec3[] {
+    const z = this.maxDepth / 2
+    const pad = Math.min(
+      this.canvasBox.width * this.paddingRatio,
+      this.canvasBox.height * this.paddingRatio,
+    )
+    const defaultPolygon = [
+      // left-top
+      vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.start.y + pad, z),
+      // right-top
+      vec3.fromValues(this.canvasBox.end.x - pad, this.canvasBox.start.y + pad, z),
+      // right-bottom
+      vec3.fromValues(this.canvasBox.end.x - pad, this.canvasBox.end.y - pad, z),
+      // left-bottom
+      vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.end.y - pad, z),
+    ]
+    return defaultPolygon
+  }
+
+  getPolygon(): Readonly<vec3[]> {
+    return this.polygon
+  }
+  resetPolygon(): void {
+    this.polygon = this.defaultPolygon()
+  }
+
+  // Centroids
+  getCentroids(): Readonly<vec3[]> {
+    return this.centroids
+  }
   addCentroid(pointOnCanvas: vec3): void {
     const point = vec3.clone(pointOnCanvas)
     point[0] += this.canvasBox.start.x
@@ -60,14 +82,15 @@ export class FlightZone {
 
     this.centroids.push(point)
   }
-
   clearCentroids(): void {
     // Fast empty list
     this.centroids.length = 0
   }
 
+  // Methods
   /** Returns true if the position is outside the flight zone
-   * defined by its 2D polygon and depth. */
+   * defined by its 2D polygon and depth.
+   */
   isOutside(position: vec3): boolean {
     const z = position[2]
     return z > this.maxDepth || z < 0 || !isInPolygon(position, this.polygon)
