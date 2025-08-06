@@ -81,7 +81,7 @@ export class Controller {
     }
 
     const maxHeight = this.renderer.maxHeight
-    this.simulation.update(this.flightZone,  maxHeight)
+    this.simulation.update(this.flightZone, maxHeight)
 
     // Draw
     this.renderer.clearCanvas()
@@ -95,7 +95,7 @@ export class Controller {
       this.renderer.drawBoid(boid, this.simulation.getConfig().maxDepth)
     })
     if (this.debug) {
-      this.renderer.drawStats(this.simulation.boidCount(), fps)
+      this.renderer.drawStats(this.simulation.boidCount(), fps, this.TARGET_FPS)
       this.renderer.drawHeight(maxHeight)
     }
 
