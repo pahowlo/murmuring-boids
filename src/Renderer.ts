@@ -1,3 +1,5 @@
+import { vec3 } from "gl-matrix"
+
 import type { RendererConfig } from "./config"
 import { Boid } from "./Boid"
 import { FlightZone, Box } from "./FlightZone"
@@ -169,9 +171,41 @@ export class Renderer {
     ctx.scale(this.devicePixelRatio, this.devicePixelRatio)
   }
 
-  drawFlightZone(flightZone: FlightZone): void {
+  /** Write stats in top-left corner */
+  drawStats(boidCount: number, fps?: number): void {
+    const ctx = this.renderingContext
+    ctx.save()
+
+    ctx.font = "12px monospace"
+    ctx.fillStyle = "#fff"
+    ctx.fillText(`Boids: ${boidCount}`, 16, 24)
+    ctx.fillText(`FPS:   ${fps ? Math.round(fps) : "--"}`, 16, 40)
+
+    ctx.restore()
+  }
+
+  drawHeight(height: number): void {
+    const ctx = this.renderingContext
+    ctx.save()
+
+    const maxCanvasHeight = height - this.canvasBox.start.y
+    
+    ctx.strokeStyle = "#ff0000"
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(0, maxCanvasHeight)
+    ctx.lineTo(this.canvasBox.width, maxCanvasHeight)
+    ctx.stroke()
+
+    ctx.restore()
+  }
+
+  drawFlightZone(flightZone: FlightZone, visibleRange: number): void {
     const startX = this.canvasBox.start.x
     const startY = this.canvasBox.start.y
+
+    const polygon = flightZone.getPolygon()
+    const centroids = flightZone.getCentroids()
 
     const ctx = this.renderingContext
     ctx.save()
@@ -179,35 +213,78 @@ export class Renderer {
     // Draw flight zone polygon
     ctx.strokeStyle = this.config.debug.flightZone.polygonColor
     ctx.lineWidth = 1
+    ctx.setLineDash([4, 6]) // 4px dash, 6
     ctx.beginPath()
-    ctx.moveTo(flightZone.polygon[0][0] - startX, flightZone.polygon[0][1] - startY)
-    for (let i = 1; i < flightZone.polygon.length; i++) {
-      ctx.lineTo(flightZone.polygon[i][0] - startX, flightZone.polygon[i][1] - startY)
+    ctx.moveTo(polygon[0][0] - startX, polygon[0][1] - startY)
+    for (let i = 1; i < polygon.length; i++) {
+      ctx.lineTo(polygon[i][0] - startX, polygon[i][1] - startY)
     }
     ctx.closePath()
     ctx.stroke()
 
     // Draw centroids
-    ctx.beginPath()
     ctx.strokeStyle = this.config.debug.flightZone.centroidsColor
-    for (const point of flightZone.centroids) {
+    for (const point of centroids) {
       const x = point[0] - startX
       const y = point[1] - startY
       const radius = 10
-      ctx.arc(x, y, radius, 0, 2 * Math.PI)
+      ctx.beginPath()
       ctx.moveTo(x - radius, y)
       ctx.lineTo(x + radius, y)
       ctx.moveTo(x, y - radius)
       ctx.lineTo(x, y + radius)
+      ctx.stroke()
+
+      ctx.beginPath()
+      ctx.setLineDash([4, 6]) // 4px dash, 6px gap
+      ctx.arc(x, y, visibleRange, 0, 2 * Math.PI)
+      ctx.stroke()
     }
+
+    ctx.restore()
+  }
+
+  drawDraftPolygon(draftPolygon: vec3[], closed: boolean): void {
+    const startX = 0 // this.canvasBox.start.x
+    const startY = 0 // this.canvasBox.start.y
+
+    const length = closed ? draftPolygon.length : draftPolygon.length - 1
+
+    const ctx = this.renderingContext
+    ctx.save()
+
+    // Draw flight zone polygon
+    ctx.strokeStyle = "#666666"
+    ctx.globalAlpha = 0.5
+    ctx.lineWidth = 1
+    ctx.setLineDash([4, 6]) // 4px dash, 6px gap
+    const radius = 10
+
+    ctx.beginPath()
+    let x = draftPolygon[0][0] - startX
+    let y = draftPolygon[0][1] - startY
+    if (!closed) {
+      // No need to draw the start point if closed. It will be drawn at the end.
+      ctx.arc(x, y, radius, 0, 2 * Math.PI)
+    }
+    ctx.moveTo(x, y)
+    for (let i = 1; i < length; i++) {
+      x = draftPolygon[i][0] - startX
+      y = draftPolygon[i][1] - startY
+      // Draw point
+      ctx.arc(x, y, radius, 0, 2 * Math.PI)
+      // Draw line to next point
+      ctx.lineTo(x, y)
+    }
+    ctx.closePath()
     ctx.stroke()
 
     ctx.restore()
   }
 
   drawBoid(boid: Boid, maxDepth: number): void {
-    const pos = boid.position
-    const vel = boid.velocity
+    const pos = boid.getPosition()
+    const vel = boid.getVelocity()
 
     const startX = this.canvasBox.start.x
     const startY = this.canvasBox.start.y

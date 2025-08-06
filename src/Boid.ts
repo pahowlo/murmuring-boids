@@ -2,6 +2,7 @@ import { vec3 } from "gl-matrix"
 
 import type { BoidConfig } from "./config"
 import { limitTurn } from "./utilities/constraints"
+import { FlightZone } from "./FlightZone"
 
 export const defaultBoidConfig: BoidConfig = {
   minSpeed: 1,
@@ -21,8 +22,8 @@ export const defaultBoidConfig: BoidConfig = {
 // Main class
 export class Boid {
   readonly displayId: number
-  position: vec3
-  velocity: vec3
+  private position: vec3
+  private velocity: vec3
   private acceleration: vec3
 
   private config: BoidConfig
@@ -53,14 +54,23 @@ export class Boid {
     this.acceleration = vec3.create()
   }
 
+  getPosition(): Readonly<vec3> {
+    return this.position
+  }
+  getVelocity(): Readonly<vec3> {
+    return this.velocity
+  }
+  getConfig(): Readonly<BoidConfig> {
+    return this.config
+  }
+
   update(
     neighbors: Boid[],
     closeNeighbors: Boid[],
     cellRadius: number,
-    IsOutsideFlightZone: (pos: vec3) => boolean,
-    polygon: vec3[],
-    centroids: vec3[],
+    flightZone: FlightZone,
     maxHeight: number,
+    visibleRange: number,
   ): void {
     let maxTurnAngleDeg = this.config.maxTurnAngleDeg
     let maxSpeed = this.config.maxSpeed
@@ -77,7 +87,9 @@ export class Boid {
     }
 
     // Boundary check: Get back to flight zone if outside
-    if (!this.backToFlightZone && IsOutsideFlightZone(this.position)) {
+    const polygon = flightZone.getPolygon()
+
+    if (!this.backToFlightZone && flightZone.isOutside(this.position)) {
       const turnBackDirection = vec3.create()
       for (const point of polygon) {
         vec3.add(
@@ -106,12 +118,14 @@ export class Boid {
     }
 
     // Centroid attraction: Get to centroids if defined
-    if (!this.followCentroids && centroids) {
+    const centroids = flightZone.getCentroids()
+
+    if (!this.followCentroids && centroids.length > 0) {
       const followDirection = vec3.create()
       for (const point of centroids) {
         const diff = vec3.subtract(vec3.create(), point, this.position)
         const manhattanDist = Math.abs(diff[0]) + Math.abs(diff[1])
-        const manhattanInvDist = 500 - manhattanDist
+        const manhattanInvDist = visibleRange - manhattanDist
         if (manhattanInvDist <= 0) {
           continue
         }

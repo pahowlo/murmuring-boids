@@ -3,7 +3,7 @@ import { vec3 } from "gl-matrix"
 import { sample } from "./random"
 
 interface Item {
-  position: vec3
+  getPosition(): Readonly<vec3>
 }
 
 // Main class
@@ -19,12 +19,20 @@ export class IncrementalSpatialGrid<T extends Item> {
     this.grid = new Map<string, T[]>()
   }
 
-  private getCellKey(pos: vec3): string {
+  private getCellKey(pos: Readonly<vec3>): string {
     return `${Math.floor(pos[0] / this.cellSize[0])},${Math.floor(pos[1] / this.cellSize[1])}`
   }
 
+  remove(item: T): void {
+    const prevCellKey = this.prevCellKeys.get(item)
+    if (!prevCellKey) return // Not found
+
+    this.removeFromGrid(item, prevCellKey)
+    this.prevCellKeys.delete(item)
+  }
+
   update(item: T): void {
-    const pos = item.position
+    const pos = item.getPosition()
     const cellKey = this.getCellKey(pos)
 
     const prevCellKey = this.prevCellKeys.get(item)
@@ -36,20 +44,7 @@ export class IncrementalSpatialGrid<T extends Item> {
     // N.B. prevCellKey should only be undefined if the item was just created.
     // Should be safe, but a lifetime attribute can be added if a bug gets introduced here.
     if (prevCellKey) {
-      const prevCell = this.grid.get(prevCellKey)
-      if (prevCell) {
-        const idx = prevCell.indexOf(item)
-        if (idx !== -1) {
-          if (prevCell.length == 1) {
-            // Remove empty cell
-            this.grid.delete(prevCellKey)
-          } else {
-            // Swap and drop for O(1) removal
-            prevCell[idx] = prevCell[prevCell.length - 1]
-            prevCell.pop()
-          }
-        }
-      }
+      this.removeFromGrid(item, prevCellKey)
     }
 
     // Add item to new cell
@@ -62,11 +57,16 @@ export class IncrementalSpatialGrid<T extends Item> {
     this.prevCellKeys.set(item, cellKey)
   }
 
+  clear(): void {
+    this.grid.clear()
+    this.prevCellKeys.clear()
+  }
+
   /**
    * Fetch all neighbors in the diamond-shaped area around the item of gridDistance length.
    */
   getNeighbors(item: T, gridDistance: { min: number; max: number; limitCount?: number }): T[] {
-    const cellKey = this.getCellKey(item.position)
+    const cellKey = this.getCellKey(item.getPosition())
 
     const limitCount = gridDistance.limitCount ?? 1_000
     const neighbors: T[] = []
@@ -111,6 +111,23 @@ export class IncrementalSpatialGrid<T extends Item> {
       neighborCount += nextNeighbors.length
     }
     return neighbors
+  }
+
+  private removeFromGrid(item: T, cellKey: string): void {
+    const cell = this.grid.get(cellKey)
+    if (!cell) return // Not found
+
+    const idx = cell.indexOf(item)
+    if (idx === -1) return // Not found
+
+    if (cell.length == 1) {
+      // Remove empty cell
+      this.grid.delete(cellKey)
+      return
+    }
+    // Swap and drop for O(1) removal
+    cell[idx] = cell[cell.length - 1]
+    cell.pop()
   }
 
   private *diamondSpiralIterator(radius: number): IterableIterator<{ dx: number; dy: number }> {
