@@ -172,14 +172,14 @@ export class Renderer {
   }
 
   /** Write stats in top-left corner */
-  drawStats(boidCount: number, fps?: number): void {
+  drawStats(boidCount: number, fps: number, targetFps: number): void {
     const ctx = this.renderingContext
     ctx.save()
 
-    ctx.font = "12px monospace"
-    ctx.fillStyle = "#fff"
+    ctx.font = "10px monospace"
+    ctx.fillStyle = "#888888"
     ctx.fillText(`Boids: ${boidCount}`, 16, 24)
-    ctx.fillText(`FPS:   ${fps ? Math.round(fps) : "--"}`, 16, 40)
+    ctx.fillText(`FPS:   ${Math.round(fps)} ~ ${targetFps}`, 16, 40)
 
     ctx.restore()
   }
@@ -189,7 +189,7 @@ export class Renderer {
     ctx.save()
 
     const maxCanvasHeight = height - this.canvasBox.start.y
-    
+
     ctx.strokeStyle = "#ff0000"
     ctx.lineWidth = 1
     ctx.beginPath()
