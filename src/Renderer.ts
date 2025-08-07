@@ -228,6 +228,7 @@ export class Renderer {
       const x = point[0] - startX
       const y = point[1] - startY
       const radius = 10
+      ctx.setLineDash([0]) // Solid line
       ctx.beginPath()
       ctx.moveTo(x - radius, y)
       ctx.lineTo(x + radius, y)
@@ -289,14 +290,9 @@ export class Renderer {
     const startX = this.canvasBox.start.x
     const startY = this.canvasBox.start.y
 
-    const depthRatio = Math.min(1.125, Math.max(-0.125, pos[2] / maxDepth))
+    let depthRatio = (1.1 - Math.max(0.1, Math.min(1.1, pos[2] / maxDepth))) / 1.2
 
-    let boidSize = this.config.boids.size
-    if (depthRatio < 0) {
-      boidSize += -depthRatio * 8 // [0, 1]
-    } else if (depthRatio > 1) {
-      boidSize -= (depthRatio - 1) * 8 // [-1, 0]
-    }
+    let boidSize = this.config.boids.size + depthRatio
 
     const ctx = this.renderingContext
     ctx.save()
@@ -305,7 +301,7 @@ export class Renderer {
     ctx.rotate(Math.atan2(vel[1], vel[0]))
     ctx.scale(boidSize, boidSize)
 
-    ctx.strokeStyle = `hsl(10, 10%, ${Math.max(10, 90 - depthRatio * 80)}%)`
+    ctx.strokeStyle = `hsl(10, 10%, ${90 * depthRatio + 10}%)`
     ctx.lineWidth = this.config.boids.lineWidth
     ctx.stroke(this.boidPath)
 

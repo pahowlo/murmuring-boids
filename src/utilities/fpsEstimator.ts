@@ -3,10 +3,10 @@ export class FpsEstimator {
   private lastFrameTime: number
   // alpha ~ 2 / (N + 1) where N would be the number of frames to average
   // over if we were using a buffer list
-  private alpha: number = 0.065
+  private alpha: number = 0.025
 
-  constructor(defaultFps: number = 60) {
-    this.previousFps = defaultFps
+  constructor(targetFps: number) {
+    this.previousFps = targetFps
     this.lastFrameTime = performance.now()
   }
 

@@ -14,7 +14,7 @@ export const defaultBoidConfig: BoidConfig = {
     pullUpTerrain: 1.8,
     cohesion: 0.6,
     alignment: 1,
-    separation: 1.2,
+    separation: 1.4,
     gravity: 0.05, // Positive since (0, 0) is the top left corner
   },
 }
@@ -47,10 +47,11 @@ export class Boid {
     const theta = Math.random() * 2 * Math.PI
     this.position = position
     this.velocity = vec3.fromValues(
-      Math.cos(theta) * this.config.maxSpeed,
-      Math.sin(theta) * this.config.maxSpeed,
-      0,
+      Math.cos(theta) * 0.5,
+      Math.sin(theta) * 0.5,
+      Math.random() - 0.5,
     )
+    vec3.scale(this.velocity, this.velocity, this.config.maxSpeed)
     this.acceleration = vec3.create()
   }
 
@@ -67,7 +68,7 @@ export class Boid {
   update(
     neighbors: Boid[],
     closeNeighbors: Boid[],
-    cellRadius: number,
+    closeRadius: number,
     flightZone: FlightZone,
     maxHeight: number,
     visibleRange: number,
@@ -159,7 +160,7 @@ export class Boid {
     vec3.add(
       boidAcceleration,
       boidAcceleration,
-      this.separationAcceleration(closeNeighbors, cellRadius),
+      this.separationAcceleration(closeNeighbors, closeRadius),
     )
 
     // == Environment
@@ -170,18 +171,21 @@ export class Boid {
 
     // == Update
     // Update velocity
-    vec3.add(this.velocity, this.velocity, this.acceleration)
+    const newVelocity = vec3.create()
+    vec3.add(newVelocity, this.velocity, this.acceleration)
 
-    if (vec3.length(this.velocity) > maxSpeed) {
-      // Normalize to max speed if too fast
-      vec3.normalize(this.velocity, this.velocity)
-      vec3.scale(this.velocity, this.velocity, maxSpeed)
-    } else if (vec3.length(this.velocity) < this.config.minSpeed) {
-      // Normalize to min speed if too slow
-      vec3.normalize(this.velocity, this.velocity)
-      vec3.scale(this.velocity, this.velocity, this.config.minSpeed)
+    const newSpeed = vec3.length(newVelocity)
+    if (newSpeed >= 0.1) {
+      this.velocity = newVelocity
+      if (newSpeed > maxSpeed) {
+        // Normalize to max speed if too fast
+        vec3.scale(this.velocity, this.velocity, maxSpeed / newSpeed)
+      } else if (newSpeed < this.config.minSpeed) {
+        // Normalize to min speed if too slow
+        vec3.scale(this.velocity, this.velocity, this.config.minSpeed / newSpeed)
+      }
     }
-
+    // Otherwise, stay on course. Discard updated velocity
     // Update position
     this.position = vec3.add(this.position, this.position, this.velocity)
   }
@@ -193,7 +197,7 @@ export class Boid {
   private alignmentAcceleration(neighbors: Boid[]): vec3 {
     const alignment = vec3.create()
     for (const neighbor of neighbors) {
-      vec3.add(alignment, alignment, neighbor.velocity)
+      vec3.add(alignment, alignment, neighbor.getVelocity())
     }
     vec3.normalize(alignment, alignment)
     vec3.scale(alignment, alignment, this.config.acceleration.alignment)
@@ -207,7 +211,7 @@ export class Boid {
   private cohesionAcceleration(visibleFlock: Boid[]): vec3 {
     const cohesion = vec3.create()
     for (const neighbor of visibleFlock) {
-      const cohesionDir = vec3.subtract(vec3.create(), neighbor.position, this.position)
+      const cohesionDir = vec3.subtract(vec3.create(), neighbor.getPosition(), this.position)
       vec3.add(cohesion, cohesion, cohesionDir)
     }
     vec3.normalize(cohesion, cohesion)
@@ -218,15 +222,14 @@ export class Boid {
   /**
    * Get a random position in the flight zone.
    */
-  private separationAcceleration(closeNeighbors: Boid[], cellRadius: number): vec3 {
+  private separationAcceleration(closeNeighbors: Boid[], closeRadius: number): vec3 {
     const separation = vec3.create()
     for (const neighbor of closeNeighbors) {
-      const separationDir = vec3.subtract(vec3.create(), this.position, neighbor.position)
+      const separationDir = vec3.subtract(vec3.create(), this.position, neighbor.getPosition())
       const dist = vec3.length(separationDir)
       if (dist === 0) continue // Skip superposed neighbors
 
-      vec3.scale(separationDir, separationDir, cellRadius / dist)
-      vec3.add(separation, separation, separationDir)
+      vec3.scaleAndAdd(separation, separation, separationDir, closeRadius / dist)
     }
 
     vec3.normalize(separation, separation)

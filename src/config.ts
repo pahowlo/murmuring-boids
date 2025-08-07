@@ -27,8 +27,8 @@ export interface RendererConfig {
 interface gridDistance {
   min: number
   max: number
-  // How many items to consider at most in that area.
-  limitCount?: number
+  // How many items to consider at most whithin the distance
+  limitCount: number
 }
 
 export interface SimulationConfig {
