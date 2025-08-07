@@ -10,13 +10,13 @@ interface Item {
 export class IncrementalSpatialGrid<T extends Item> {
   readonly cellSize: vec3
   readonly cellRadius: number
-  private grid: Map<string, T[]>
-  private prevCellKeys: Map<T, string> = new Map()
+
+  private grid: Map<string, T[]> = new Map()
+  private itemCellKeys: Map<T, string> = new Map()
 
   constructor(cellSize: { x: number; y: number }) {
     this.cellSize = vec3.fromValues(cellSize.x, cellSize.y, 0)
     this.cellRadius = Math.ceil(Math.sqrt((cellSize.x * cellSize.x + cellSize.y * cellSize.y) / 2))
-    this.grid = new Map<string, T[]>()
   }
 
   private getCellKey(pos: Readonly<vec3>): string {
@@ -24,42 +24,58 @@ export class IncrementalSpatialGrid<T extends Item> {
   }
 
   remove(item: T): void {
-    const prevCellKey = this.prevCellKeys.get(item)
-    if (!prevCellKey) return // Not found
+    const cellKey = this.itemCellKeys.get(item)
+    if (!cellKey) return // Not found
 
-    this.removeFromGrid(item, prevCellKey)
-    this.prevCellKeys.delete(item)
+    this.removeFromGrid(item, cellKey)
+    this.itemCellKeys.delete(item)
   }
 
   update(item: T): void {
     const pos = item.getPosition()
-    const cellKey = this.getCellKey(pos)
+    const newCellKey = this.getCellKey(pos)
 
-    const prevCellKey = this.prevCellKeys.get(item)
-    if (prevCellKey === cellKey) {
+    const cellKey = this.itemCellKeys.get(item)
+    if (cellKey === newCellKey) {
       return // Nothing to do
     }
 
     // Remove item from old cell if found
-    // N.B. prevCellKey should only be undefined if the item was just created.
+    // N.B. cellKey should only be undefined if the item was just created.
     // Should be safe, but a lifetime attribute can be added if a bug gets introduced here.
-    if (prevCellKey) {
-      this.removeFromGrid(item, prevCellKey)
+    if (cellKey) {
+      this.removeFromGrid(item, cellKey)
     }
 
     // Add item to new cell
-    const cell = this.grid.get(cellKey)
+    const cell = this.grid.get(newCellKey)
     if (cell) {
       cell.push(item)
     } else {
-      this.grid.set(cellKey, [item])
+      this.grid.set(newCellKey, [item])
     }
-    this.prevCellKeys.set(item, cellKey)
+    this.itemCellKeys.set(item, newCellKey)
   }
 
   clear(): void {
     this.grid.clear()
-    this.prevCellKeys.clear()
+    this.itemCellKeys.clear()
+  }
+
+  getRandomCellCoords():
+    | { startX: number; startY: number; width: number; height: number }
+    | undefined {
+    const cellKeys = Array.from(this.grid.keys())
+    if (cellKeys.length === 0) return undefined
+
+    const i = Math.floor(Math.random() * cellKeys.length)
+    const [cellX, cellY] = cellKeys[i].split(",").map(Number)
+    return {
+      startX: cellX * this.cellSize[0],
+      startY: cellY * this.cellSize[1],
+      width: this.cellSize[0],
+      height: this.cellSize[1],
+    }
   }
 
   /**
@@ -68,9 +84,8 @@ export class IncrementalSpatialGrid<T extends Item> {
   getNeighbors(item: T, gridDistance: { min: number; max: number; limitCount?: number }): T[] {
     const cellKey = this.getCellKey(item.getPosition())
 
-    const limitCount = gridDistance.limitCount ?? 1_000
     const neighbors: T[] = []
-    let neighborCount = 0
+    let remainingCount = gridDistance.limitCount || 100
 
     let minGridDistance = Math.max(0, gridDistance.min)
     if (minGridDistance == 0) {
@@ -80,8 +95,8 @@ export class IncrementalSpatialGrid<T extends Item> {
           if (neighbor === item) continue // Skip self
 
           neighbors.push(neighbor)
-          neighborCount++
-          if (neighborCount >= limitCount) {
+          remainingCount--
+          if (remainingCount <= 0) {
             return neighbors // early return since we have enough neighbors
           }
         }
@@ -100,15 +115,13 @@ export class IncrementalSpatialGrid<T extends Item> {
 
         nextNeighbors.push(...neighborCell)
       }
-      const limitReached = neighborCount + nextNeighbors.length >= limitCount
-      if (limitReached) {
-        const k = limitCount - neighborCount
-        neighbors.push(...sample(nextNeighbors, k))
+      if (nextNeighbors.length >= remainingCount) {
+        neighbors.push(...sample(nextNeighbors, remainingCount))
         return neighbors // early return since we have enough neighbors
       }
 
       neighbors.push(...nextNeighbors)
-      neighborCount += nextNeighbors.length
+      remainingCount -= nextNeighbors.length
     }
     return neighbors
   }
@@ -134,6 +147,8 @@ export class IncrementalSpatialGrid<T extends Item> {
     let dx = radius
     let dy = 0
     yield { dx, dy }
+
+    if (radius === 0) return // No need to iterate
 
     while (dx > 0) {
       dx--

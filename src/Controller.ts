@@ -20,8 +20,8 @@ export class Controller {
   private debug: boolean = false
 
   private isRunning = false
-  private animationId: number | null = null
-  private resizeTimeoutId: number | null = null
+  private simulationLoopId?: number = undefined
+  private renderingLoopId?: number = undefined
 
   constructor(
     window: Window,
@@ -36,7 +36,7 @@ export class Controller {
     }
 
     this.TARGET_FRAME_TIME = 1000 / this.TARGET_FPS
-    this.fpsEstimator = new FpsEstimator()
+    this.fpsEstimator = new FpsEstimator(this.TARGET_FPS)
   }
 
   start(maxBoidCount: number, debug: boolean, boidConfig: Partial<BoidConfig> = {}): void {
@@ -51,13 +51,20 @@ export class Controller {
     }
 
     this.isRunning = true
-    this.simulation.start(Math.floor(maxBoidCount / 4), boidConfig)
-    this.animationLoop()
-    this.resizeLoop()
+    this.simulation.start(Math.floor(maxBoidCount * 0.75), boidConfig)
+    this.simulationLoop()
+    this.renderingLoop()
   }
 
-  private async animationLoop(): Promise<void> {
+  private async renderingLoop(): Promise<void> {
     if (!this.isRunning) return
+
+    // Resize only display settings have changed
+    const resized = this.renderer.checkResize() // Start fresh
+    this.flightZone.resize(this.renderer.canvasBox)
+    if (resized) {
+      this.simulation.resize(this.renderer.screenBox)
+    }
 
     // Update simulation
     this.flightZone.clearCentroids()
@@ -66,22 +73,8 @@ export class Controller {
       this.flightZone.addCentroid(mousePositionOnCanvas)
     }
 
-    const prevFrameTime = this.fpsEstimator.getLastFrameTime()
     const fps = this.fpsEstimator.getFps()
-    const targetFpsDiff = fps - this.TARGET_FPS
-    if (targetFpsDiff > 1) {
-      this.simulation.addBoidsIfMissing(100)
-    }
-    if (targetFpsDiff > 2) {
-      // Slow down to avoid rendering too fast at first
-      const waitTime = this.TARGET_FRAME_TIME - (performance.now() - prevFrameTime)
-      if (waitTime > 0) {
-        await new Promise((resolve) => setTimeout(resolve, waitTime))
-      }
-    }
-
     const maxHeight = this.renderer.maxHeight
-    this.simulation.update(this.flightZone, maxHeight)
 
     // Draw
     this.renderer.clearCanvas()
@@ -99,34 +92,47 @@ export class Controller {
       this.renderer.drawHeight(maxHeight)
     }
 
-    // Update FPS estimation
-    this.fpsEstimator.update()
     // Request next frame
-    this.animationId = requestAnimationFrame(this.animationLoop.bind(this))
+    this.renderingLoopId = requestAnimationFrame(this.renderingLoop.bind(this))
   }
 
-  private async resizeLoop(): Promise<void> {
+  private async simulationLoop(): Promise<void> {
     if (!this.isRunning) return
 
-    // Resize only display settings have changed
-    const resized = this.renderer.checkResize() // Start fresh
-    this.flightZone.resize(this.renderer.canvasBox)
-    if (resized) {
-      this.simulation.resize(this.renderer.screenBox)
+    const prevFrameTime = this.fpsEstimator.getLastFrameTime()
+    const fps = this.fpsEstimator.getFps()
+
+    const targetFpsDiff = fps - this.TARGET_FPS
+
+    if (targetFpsDiff > 0) {
+      this.simulation.addBoidsIfMissing(100)
+
+      // Slow down to avoid rendering too fast at first
+      const waitTime = this.TARGET_FRAME_TIME - (performance.now() - prevFrameTime)
+      if (waitTime > 0) {
+        await new Promise((resolve) => setTimeout(resolve, waitTime))
+      }
+    } else if (targetFpsDiff <= -8) {
+      this.simulation.removeBoids(5)
     }
 
+    const maxHeight = this.renderer.maxHeight
+    this.simulation.update(this.flightZone, maxHeight)
+
+    // Update FPS estimation
+    this.fpsEstimator.update()
     // Trigger next resize check
-    this.resizeTimeoutId = setTimeout(this.resizeLoop.bind(this), 10) as unknown as number
+    this.simulationLoopId = requestAnimationFrame(this.simulationLoop.bind(this))
   }
 
   stop(): void {
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId)
-      this.animationId = null
+    if (this.simulationLoopId) {
+      cancelAnimationFrame(this.simulationLoopId)
+      this.simulationLoopId = undefined
     }
-    if (this.resizeTimeoutId) {
-      clearTimeout(this.resizeTimeoutId)
-      this.resizeTimeoutId = null
+    if (this.renderingLoopId) {
+      cancelAnimationFrame(this.renderingLoopId)
+      this.renderingLoopId = undefined
     }
 
     this.renderer.clearCanvas()

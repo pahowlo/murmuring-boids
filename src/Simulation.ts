@@ -10,11 +10,11 @@ export const defaultSimulationConfig: SimulationConfig = {
   visibleRange: 500,
   grid: {
     cellSize: { x: 10, y: 10 },
-    neighborDistance: { min: 1, max: 5, limitCount: 30 },
+    neighborDistance: { min: 1, max: 4, limitCount: 40 },
     closeNeighborDistance: {
       min: 0,
       max: 0,
-      limitCount: 20,
+      limitCount: 10,
     },
   },
 }
@@ -74,7 +74,7 @@ export class Simulation {
     const missingCount = this.maxBoidCount - this.boids.length
     if (missingCount > 0) {
       for (let _ = 0; _ < Math.min(count, missingCount); _++) {
-        this.spawnBoid(this.config.maxDepth)
+        this.spawnBoid(this.config.maxDepth, true)
       }
       return true // Boids were added
     }
@@ -118,10 +118,20 @@ export class Simulation {
     }
   }
 
-  private spawnBoid(depth: number): void {
+  private spawnBoid(depth: number, withinFlock?: boolean): void {
+    let cellCoords
+    if (withinFlock) {
+      cellCoords = this.spatialGrid.getRandomCellCoords()
+    }
+    const { startX, startY, width, height } = cellCoords || {
+      startX: this.simBox.start.x - 100,
+      startY: this.simBox.start.y - 20,
+      width: this.simBox.width + 100,
+      height: this.simBox.height,
+    }
     const position = vec3.fromValues(
-      this.simBox.start.x + this.simBox.width * (Math.random() * 1.4 - 0.2),
-      this.simBox.start.y + this.simBox.height * (Math.random() * 1.2 - 0.2) - 20,
+      startX + width * (Math.random() * 1.2 - 0.1),
+      startY + height * (Math.random() * 1.2 - 0.1),
       // Spawn new boid at max depth to make it slowly appear from the background
       depth,
     )

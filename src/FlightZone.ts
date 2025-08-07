@@ -45,20 +45,20 @@ export class FlightZone {
 
   // Polygon
   private defaultPolygon(): vec3[] {
-    const z = this.maxDepth / 2
+    const halfDepth = this.maxDepth / 2
     const pad = Math.min(
       this.canvasBox.width * this.paddingRatio,
       this.canvasBox.height * this.paddingRatio,
     )
     const defaultPolygon = [
       // left-top
-      vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.start.y + pad, z),
+      vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.start.y + pad, halfDepth),
       // right-top
-      vec3.fromValues(this.canvasBox.end.x - pad, this.canvasBox.start.y + pad, z),
+      vec3.fromValues(this.canvasBox.end.x - pad, this.canvasBox.start.y + pad, halfDepth),
       // right-bottom
-      vec3.fromValues(this.canvasBox.end.x - pad, this.canvasBox.end.y - pad, z),
+      vec3.fromValues(this.canvasBox.end.x - pad, this.canvasBox.end.y - pad, halfDepth),
       // left-bottom
-      vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.end.y - pad, z),
+      vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.end.y - pad, halfDepth),
     ]
     return defaultPolygon
   }
