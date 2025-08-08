@@ -10,6 +10,7 @@ export const defaultBoidConfig: BoidConfig = {
   maxTurnAngleDeg: 120,
   acceleration: {
     backToFlightZone: 0.6,
+    stayCloseToCenterOwfMass: 0.1,
     followCentroids: 0.6,
     pullUpTerrain: 1.8,
     cohesion: 0.6,
@@ -69,6 +70,7 @@ export class Boid {
     neighbors: Boid[],
     closeNeighbors: Boid[],
     closeRadius: number,
+    centerOwMass: vec3,
     flightZone: FlightZone,
     maxHeight: number,
     visibleDistance: number,
@@ -93,12 +95,11 @@ export class Boid {
 
     if (!this.backToFlightZone && flightZone.isOutside(this.position)) {
       const turnBackDirection = vec3.create()
-      for (const point of polygon) {
-        vec3.add(
-          turnBackDirection,
-          turnBackDirection,
-          vec3.subtract(vec3.create(), point, this.position),
-        )
+      for (let _ = 0; _ < 2; _++) {
+        const idx = Math.floor(Math.random() * polygon.length)
+        const point = polygon[idx]
+        const diff = vec3.subtract(vec3.create(), point, this.position)
+        vec3.add(turnBackDirection, turnBackDirection, diff)
       }
       vec3.normalize(turnBackDirection, turnBackDirection)
       this.backToFlightZone = {
@@ -119,7 +120,7 @@ export class Boid {
       }
     }
 
-    // Centroid attraction: Get to centroids if defined
+    // Centroid attraction: Converge towards closest visible centroids if any
     const centroids = flightZone.getCentroids()
 
     if (!this.followCentroids && centroids.length > 0) {
@@ -152,6 +153,16 @@ export class Boid {
         this.followCentroids = undefined
       }
     }
+
+    // Stay close to center of mass of all boids
+    const diffCenterOwMass = vec3.subtract(vec3.create(), centerOwMass, this.position)
+    vec3.normalize(diffCenterOwMass, diffCenterOwMass)
+    vec3.scaleAndAdd(
+      boidAcceleration,
+      boidAcceleration,
+      diffCenterOwMass,
+      this.config.acceleration.stayCloseToCenterOwfMass,
+    )
 
     // Cohesion and alignment: Stay with the flock
     vec3.add(boidAcceleration, boidAcceleration, this.cohesionAcceleration(neighbors))
@@ -237,11 +248,11 @@ export class Boid {
     closeRadius: number,
     visibleDepth: number,
   ): vec3 {
-    let visibleRadius = Math.max(closeRadius, visibleDepth)
+    const visibleRadius = Math.max(closeRadius, visibleDepth)
 
     const separation = vec3.create()
     for (const neighbor of closeNeighbors) {
-      let separationDir = vec3.subtract(vec3.create(), this.position, neighbor.getPosition())
+      const separationDir = vec3.subtract(vec3.create(), this.position, neighbor.getPosition())
       if (Math.abs(separationDir[2]) > visibleDepth * 2) {
         // Ignore close neighbors that are too far along z-axis
         continue
