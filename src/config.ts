@@ -33,7 +33,8 @@ interface gridDistance {
 
 export interface SimulationConfig {
   maxDepth: number
-  visibleRange: number
+  visibleDistance: number
+  visibleDepth: number
   grid: {
     cellSize: { x: number; y: number }
     neighborDistance: gridDistance

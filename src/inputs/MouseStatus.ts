@@ -1,9 +1,9 @@
-import { vec3 } from "gl-matrix"
+import { vec2 } from "gl-matrix"
 
 export class MouseStatus {
   private canvas: HTMLCanvasElement
 
-  private positionOnCanvas?: vec3
+  private positionOnCanvas?: vec2
   private isPressed: boolean = false
   private isMouseOver: boolean = true
 
@@ -21,7 +21,7 @@ export class MouseStatus {
     return this.isMouseOver
   }
 
-  getPositionOnCanvas(): vec3 | undefined {
+  getPositionOnCanvas(): vec2 | undefined {
     if (this.isMouseFocused() && this.positionOnCanvas) {
       return this.positionOnCanvas
     }
@@ -45,7 +45,7 @@ export class MouseStatus {
     })
     canvas.addEventListener("mousemove", (e) => {
       this.isMouseOver = true
-      const newPositionOnCanvas = vec3.fromValues(e.clientX, e.clientY, 50)
+      const newPositionOnCanvas = vec2.fromValues(e.clientX, e.clientY)
       this.positionOnCanvas = newPositionOnCanvas
     })
 

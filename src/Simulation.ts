@@ -7,10 +7,11 @@ import { FlightZone, Box } from "./FlightZone"
 
 export const defaultSimulationConfig: SimulationConfig = {
   maxDepth: 250,
-  visibleRange: 500,
+  visibleDistance: 500,
+  visibleDepth: 50,
   grid: {
     cellSize: { x: 10, y: 10 },
-    neighborDistance: { min: 1, max: 4, limitCount: 40 },
+    neighborDistance: { min: 1, max: 6, limitCount: 30 },
     closeNeighborDistance: {
       min: 0,
       max: 0,
@@ -112,7 +113,8 @@ export class Simulation {
         this.spatialGrid.cellRadius,
         flightZone,
         maxHeight,
-        this.config.visibleRange,
+        this.config.visibleDistance,
+        this.config.visibleDepth,
       )
       this.spatialGrid.update(boid)
     }
