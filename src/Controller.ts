@@ -56,46 +56,6 @@ export class Controller {
     this.renderingLoop()
   }
 
-  private async renderingLoop(): Promise<void> {
-    if (!this.isRunning) return
-
-    // Resize only display settings have changed
-    const resized = this.renderer.checkResize() // Start fresh
-    this.flightZone.resize(this.renderer.canvasBox)
-    if (resized) {
-      this.simulation.resize(this.renderer.screenBox)
-    }
-
-    // Update simulation
-    this.flightZone.clearCentroids()
-    const mousePositionOnCanvas = this.inputs.mouseStatus.getPositionOnCanvas()
-    if (mousePositionOnCanvas) {
-      this.flightZone.addCentroid(mousePositionOnCanvas)
-    }
-
-    const tps = this.tpsEstimator.get()
-    const maxHeight = this.renderer.maxHeight
-
-    // Draw
-    this.renderer.clearCanvas()
-    // Background
-    if (this.debug) {
-      this.renderer.drawFlightZone(this.flightZone, this.simulation.getConfig().visibleDistance)
-    }
-
-    // Forground
-    this.simulation.boids.forEach((boid) => {
-      this.renderer.drawBoid(boid, this.simulation.getConfig().maxDepth)
-    })
-    if (this.debug) {
-      this.renderer.drawStats(this.simulation.boidCount(), tps, this.TARGET_TPS)
-      this.renderer.drawHeight(maxHeight)
-    }
-
-    // Request next frame
-    this.renderingLoopId = requestAnimationFrame(this.renderingLoop.bind(this))
-  }
-
   private async simulationLoop(): Promise<void> {
     if (!this.isRunning) return
 
@@ -123,6 +83,47 @@ export class Controller {
     this.tpsEstimator.update()
     // Trigger next resize check
     this.simulationLoopId = requestAnimationFrame(this.simulationLoop.bind(this))
+  }
+
+  private async renderingLoop(): Promise<void> {
+    if (!this.isRunning) return
+
+    // Resize only display settings have changed
+    const resized = this.renderer.checkResize() // Start fresh
+    this.flightZone.resize(this.renderer.canvasBox)
+    if (resized) {
+      this.simulation.resize(this.renderer.screenBox)
+    }
+
+    // Update simulation
+    this.flightZone.clearCentroids()
+    const mousePositionOnCanvas = this.inputs.mouseStatus.getPositionOnCanvas()
+    if (mousePositionOnCanvas) {
+      this.flightZone.addCentroid(mousePositionOnCanvas)
+    }
+
+    const tps = this.tpsEstimator.get()
+    const maxHeight = this.renderer.maxHeight
+
+    // Draw
+    this.renderer.clearCanvas()
+    // Background
+    if (this.debug) {
+      this.renderer.drawFlightZone(this.flightZone, this.simulation.getConfig().visibleDistance)
+    }
+    
+    // Forground
+    this.simulation.boids.forEach((boid) => {
+      this.renderer.drawBoid(boid, this.simulation.getConfig().maxDepth)
+    })
+    if (this.debug) {
+      this.renderer.drawHeight(maxHeight)
+      this.renderer.drawCenterOwMass(this.simulation.getCenterOwMass())
+      this.renderer.drawStats(this.simulation.boidCount(), tps, this.TARGET_TPS)
+    }
+
+    // Request next frame
+    this.renderingLoopId = requestAnimationFrame(this.renderingLoop.bind(this))
   }
 
   stop(): void {

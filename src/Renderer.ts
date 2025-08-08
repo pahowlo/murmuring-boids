@@ -1,4 +1,4 @@
-import { vec3 } from "gl-matrix"
+import { vec3, vec2 } from "gl-matrix"
 
 import type { RendererConfig } from "./config"
 import { Boid } from "./Boid"
@@ -15,6 +15,8 @@ export const defaultRendererConfig: RendererConfig = {
       polygonColor: "#00ff00",
       centroidsColor: "#0000ff",
     },
+    centerOwMassColor: "#ffff00", // yellow
+    maxHeightColor: "#ff0000",
   },
 }
 
@@ -190,11 +192,32 @@ export class Renderer {
 
     const maxCanvasHeight = height - this.canvasBox.start.y
 
-    ctx.strokeStyle = "#ff0000"
+    ctx.strokeStyle = this.config.debug.maxHeightColor
     ctx.lineWidth = 1
     ctx.beginPath()
     ctx.moveTo(0, maxCanvasHeight)
     ctx.lineTo(this.canvasBox.width, maxCanvasHeight)
+    ctx.stroke()
+
+    ctx.restore()
+  }
+
+  drawCenterOwMass(center: vec3 | Readonly<vec3>): void {
+    const ctx = this.renderingContext
+    ctx.save()
+
+    const x = center[0] - this.canvasBox.start.x
+    const y = center[1] - this.canvasBox.start.y
+
+    ctx.lineWidth = 1
+    ctx.strokeStyle = this.config.debug.centerOwMassColor
+    ctx.setLineDash([]) // Solid line
+    ctx.beginPath()
+    const radius = 5
+    ctx.moveTo(x - radius, y - radius)
+    ctx.lineTo(x + radius, y + radius)
+    ctx.moveTo(x + radius, y - radius)
+    ctx.lineTo(x - radius, y + radius)
     ctx.stroke()
 
     ctx.restore()
@@ -210,9 +233,9 @@ export class Renderer {
     const ctx = this.renderingContext
     ctx.save()
 
+    ctx.lineWidth = 1
     // Draw flight zone polygon
     ctx.strokeStyle = this.config.debug.flightZone.polygonColor
-    ctx.lineWidth = 1
     ctx.beginPath()
     ctx.setLineDash([4, 6]) // 4px dash, 6
     ctx.moveTo(polygon[0][0] - startX, polygon[0][1] - startY)
@@ -228,16 +251,16 @@ export class Renderer {
       const x = point[0] - startX
       const y = point[1] - startY
       const radius = 10
-      ctx.beginPath()
       ctx.setLineDash([]) // Solid line
+      ctx.beginPath()
       ctx.moveTo(x - radius, y)
       ctx.lineTo(x + radius, y)
       ctx.moveTo(x, y - radius)
       ctx.lineTo(x, y + radius)
       ctx.stroke()
 
-      ctx.beginPath()
       ctx.setLineDash([4, 6]) // 4px dash, 6px gap
+      ctx.beginPath()
       ctx.arc(x, y, visibleRange, 0, 2 * Math.PI)
       ctx.stroke()
     }
@@ -245,7 +268,7 @@ export class Renderer {
     ctx.restore()
   }
 
-  drawDraftPolygon(draftPolygon: vec3[], closed: boolean): void {
+  drawDraftPolygon(draftPolygon: vec2[], closed: boolean): void {
     const startX = 0 // this.canvasBox.start.x
     const startY = 0 // this.canvasBox.start.y
 
@@ -297,12 +320,12 @@ export class Renderer {
     const ctx = this.renderingContext
     ctx.save()
 
+    ctx.lineWidth = this.config.boids.lineWidth
+    ctx.strokeStyle = `hsl(10, 10%, ${90 * depthRatio + 10}%)`
+
     ctx.translate(pos[0] - startX, pos[1] - startY)
     ctx.rotate(Math.atan2(vel[1], vel[0]))
     ctx.scale(boidSize, boidSize)
-
-    ctx.strokeStyle = `hsl(10, 10%, ${90 * depthRatio + 10}%)`
-    ctx.lineWidth = this.config.boids.lineWidth
     ctx.stroke(this.boidPath)
 
     ctx.restore()
