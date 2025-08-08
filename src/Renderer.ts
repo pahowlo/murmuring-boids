@@ -213,8 +213,8 @@ export class Renderer {
     // Draw flight zone polygon
     ctx.strokeStyle = this.config.debug.flightZone.polygonColor
     ctx.lineWidth = 1
-    ctx.setLineDash([4, 6]) // 4px dash, 6
     ctx.beginPath()
+    ctx.setLineDash([4, 6]) // 4px dash, 6
     ctx.moveTo(polygon[0][0] - startX, polygon[0][1] - startY)
     for (let i = 1; i < polygon.length; i++) {
       ctx.lineTo(polygon[i][0] - startX, polygon[i][1] - startY)
@@ -228,8 +228,8 @@ export class Renderer {
       const x = point[0] - startX
       const y = point[1] - startY
       const radius = 10
-      ctx.setLineDash([0]) // Solid line
       ctx.beginPath()
+      ctx.setLineDash([]) // Solid line
       ctx.moveTo(x - radius, y)
       ctx.lineTo(x + radius, y)
       ctx.moveTo(x, y - radius)
@@ -290,9 +290,9 @@ export class Renderer {
     const startX = this.canvasBox.start.x
     const startY = this.canvasBox.start.y
 
-    let depthRatio = (1.2 - Math.max(0.2, Math.min(1.2, pos[2] / maxDepth)))
+    const depthRatio = 1.2 - Math.max(0.2, Math.min(1.2, pos[2] / maxDepth))
 
-    let boidSize = this.config.boids.size + depthRatio * 2 - 1
+    const boidSize = this.config.boids.size + depthRatio * 2 - 1
 
     const ctx = this.renderingContext
     ctx.save()

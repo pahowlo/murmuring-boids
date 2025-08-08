@@ -41,7 +41,10 @@ export class Simulation {
       ...defaultSimulationConfig,
       ...simulationConfig,
     }
-    this.spatialGrid = new IncrementalSpatialGrid<Boid>(this.config.grid.cellSize)
+    this.spatialGrid = new IncrementalSpatialGrid<Boid>(
+      this.config.grid.cellSize,
+      this.maxBoidCount,
+    )
   }
 
   getConfig(): Readonly<SimulationConfig> {
@@ -100,6 +103,8 @@ export class Simulation {
   update(flightZone: FlightZone, maxHeight: number): void {
     if (!this.isRunning) return
 
+    this.spatialGrid.maxItemCount = this.maxBoidCount // Just in case it changed
+
     for (const boid of this.boids) {
       const neighbors = this.spatialGrid.getNeighbors(boid, this.config.grid.neighborDistance)
       const closeNeighbors = this.spatialGrid.getNeighbors(
@@ -111,6 +116,7 @@ export class Simulation {
         neighbors,
         closeNeighbors,
         this.spatialGrid.cellRadius,
+        this.spatialGrid.centerOwMass,
         flightZone,
         maxHeight,
         this.config.visibleDistance,

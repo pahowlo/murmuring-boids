@@ -4,19 +4,27 @@ import { sample } from "./random"
 
 interface Item {
   getPosition(): Readonly<vec3>
+  getVelocity(): Readonly<vec3>
 }
 
 // Main class
 export class IncrementalSpatialGrid<T extends Item> {
   readonly cellSize: vec3
   readonly cellRadius: number
+  centerOwMass: vec3 = vec3.fromValues(500, 500, 100)
+  private centerOwMassAlpha: number
 
   private grid: Map<string, T[]> = new Map()
   private itemCellKeys: Map<T, string> = new Map()
 
-  constructor(cellSize: { x: number; y: number }) {
+  constructor(cellSize: { x: number; y: number }, maxItemCount: number) {
     this.cellSize = vec3.fromValues(cellSize.x, cellSize.y, 0)
     this.cellRadius = Math.ceil(Math.sqrt((cellSize.x * cellSize.x + cellSize.y * cellSize.y) / 2))
+    this.centerOwMassAlpha = 2 / (maxItemCount + 1)
+  }
+
+  set maxItemCount(value: number) {
+    this.centerOwMassAlpha = 2 / (value + 1)
   }
 
   private getCellKey(pos: Readonly<vec3>): string {
@@ -55,6 +63,11 @@ export class IncrementalSpatialGrid<T extends Item> {
       this.grid.set(newCellKey, [item])
     }
     this.itemCellKeys.set(item, newCellKey)
+
+    // Update mass center
+    vec3.scale(this.centerOwMass, this.centerOwMass, 1 - this.centerOwMassAlpha)
+    const nextPos = vec3.scaleAndAdd(vec3.create(), pos, item.getVelocity(), 2)
+    vec3.scaleAndAdd(this.centerOwMass, this.centerOwMass, nextPos, this.centerOwMassAlpha)
   }
 
   clear(): void {

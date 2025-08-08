@@ -4,6 +4,7 @@ export interface BoidConfig {
   maxTurnAngleDeg: number
   acceleration: {
     backToFlightZone: number
+    stayCloseToCenterOwfMass: number
     followCentroids: number
     pullUpTerrain: number
     cohesion: number
