@@ -13,8 +13,8 @@ export const defaultBoidConfig: BoidConfig = {
     followCentroids: 0.6,
     pullUpTerrain: 1.8,
     cohesion: 0.6,
-    alignment: 1,
-    separation: 1.4,
+    alignment: 1.2,
+    separation: 1.8,
     gravity: 0.05, // Positive since (0, 0) is the top left corner
   },
 }
@@ -71,7 +71,8 @@ export class Boid {
     closeRadius: number,
     flightZone: FlightZone,
     maxHeight: number,
-    visibleRange: number,
+    visibleDistance: number,
+    visibleDepth: number,
   ): void {
     let maxTurnAngleDeg = this.config.maxTurnAngleDeg
     let maxSpeed = this.config.maxSpeed
@@ -126,7 +127,7 @@ export class Boid {
       for (const point of centroids) {
         const diff = vec3.subtract(vec3.create(), point, this.position)
         const manhattanDist = Math.abs(diff[0]) + Math.abs(diff[1])
-        const manhattanInvDist = visibleRange - manhattanDist
+        const manhattanInvDist = visibleDistance - manhattanDist
         if (manhattanInvDist <= 0) {
           continue
         }
@@ -154,13 +155,17 @@ export class Boid {
 
     // Cohesion and alignment: Stay with the flock
     vec3.add(boidAcceleration, boidAcceleration, this.cohesionAcceleration(neighbors))
-    vec3.add(boidAcceleration, boidAcceleration, this.alignmentAcceleration(neighbors))
+    vec3.add(
+      boidAcceleration,
+      boidAcceleration,
+      this.alignmentAcceleration(neighbors, visibleDepth),
+    )
 
     // Separation: Avoid collisions with neighbors
     vec3.add(
       boidAcceleration,
       boidAcceleration,
-      this.separationAcceleration(closeNeighbors, closeRadius),
+      this.separationAcceleration(closeNeighbors, closeRadius, visibleDepth),
     )
 
     // == Environment
@@ -194,9 +199,14 @@ export class Boid {
    * Acceleration to match direction and speed of nearby neighbors.
    * To match velocity of the flock.
    */
-  private alignmentAcceleration(neighbors: Boid[]): vec3 {
+  private alignmentAcceleration(neighbors: Boid[], visibleDepth: number): vec3 {
     const alignment = vec3.create()
     for (const neighbor of neighbors) {
+      const zDiff = Math.abs(neighbor.getPosition()[2] - this.position[2])
+      if (zDiff > visibleDepth * 2) {
+        // Ignore neighbors that are too far along z-axis
+        continue
+      }
       vec3.add(alignment, alignment, neighbor.getVelocity())
     }
     vec3.normalize(alignment, alignment)
@@ -222,14 +232,26 @@ export class Boid {
   /**
    * Get a random position in the flight zone.
    */
-  private separationAcceleration(closeNeighbors: Boid[], closeRadius: number): vec3 {
+  private separationAcceleration(
+    closeNeighbors: Boid[],
+    closeRadius: number,
+    visibleDepth: number,
+  ): vec3 {
+    let visibleRadius = Math.max(closeRadius, visibleDepth)
+
     const separation = vec3.create()
     for (const neighbor of closeNeighbors) {
-      const separationDir = vec3.subtract(vec3.create(), this.position, neighbor.getPosition())
-      const dist = vec3.length(separationDir)
-      if (dist === 0) continue // Skip superposed neighbors
-
-      vec3.scaleAndAdd(separation, separation, separationDir, closeRadius / dist)
+      let separationDir = vec3.subtract(vec3.create(), this.position, neighbor.getPosition())
+      if (Math.abs(separationDir[2]) > visibleDepth * 2) {
+        // Ignore close neighbors that are too far along z-axis
+        continue
+      }
+      let dist = vec3.length(separationDir)
+      if (dist === 0) {
+        dist = 10
+        vec3.random(separationDir, dist)
+      }
+      vec3.scaleAndAdd(separation, separation, separationDir, visibleRadius / dist - 1)
     }
 
     vec3.normalize(separation, separation)

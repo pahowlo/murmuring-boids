@@ -1,5 +1,5 @@
 import type { BoidConfig, RendererConfig } from "./config"
-import { FpsEstimator } from "./utilities/fpsEstimator"
+import { FreqEstimator } from "./utilities/freqEstimator"
 import { MouseStatus } from "./inputs/MouseStatus"
 import { FlightZone } from "./FlightZone"
 import { Renderer } from "./Renderer"
@@ -13,9 +13,9 @@ export class Controller {
     mouseStatus: MouseStatus
   }
 
-  readonly TARGET_FPS = 30
-  readonly TARGET_FRAME_TIME: number // in ms
-  private fpsEstimator: FpsEstimator
+  readonly TARGET_TPS = 30
+  readonly TARGET_TICK_TIME: number // in ms
+  private tpsEstimator: FreqEstimator
 
   private debug: boolean = false
 
@@ -35,8 +35,8 @@ export class Controller {
       mouseStatus: new MouseStatus(canvas),
     }
 
-    this.TARGET_FRAME_TIME = 1000 / this.TARGET_FPS
-    this.fpsEstimator = new FpsEstimator(this.TARGET_FPS)
+    this.TARGET_TICK_TIME = 1000 / this.TARGET_TPS
+    this.tpsEstimator = new FreqEstimator(this.TARGET_TPS)
   }
 
   start(maxBoidCount: number, debug: boolean, boidConfig: Partial<BoidConfig> = {}): void {
@@ -73,14 +73,14 @@ export class Controller {
       this.flightZone.addCentroid(mousePositionOnCanvas)
     }
 
-    const fps = this.fpsEstimator.getFps()
+    const tps = this.tpsEstimator.get()
     const maxHeight = this.renderer.maxHeight
 
     // Draw
     this.renderer.clearCanvas()
     // Background
     if (this.debug) {
-      this.renderer.drawFlightZone(this.flightZone, this.simulation.getConfig().visibleRange)
+      this.renderer.drawFlightZone(this.flightZone, this.simulation.getConfig().visibleDistance)
     }
 
     // Forground
@@ -88,7 +88,7 @@ export class Controller {
       this.renderer.drawBoid(boid, this.simulation.getConfig().maxDepth)
     })
     if (this.debug) {
-      this.renderer.drawStats(this.simulation.boidCount(), fps, this.TARGET_FPS)
+      this.renderer.drawStats(this.simulation.boidCount(), tps, this.TARGET_TPS)
       this.renderer.drawHeight(maxHeight)
     }
 
@@ -99,20 +99,20 @@ export class Controller {
   private async simulationLoop(): Promise<void> {
     if (!this.isRunning) return
 
-    const prevFrameTime = this.fpsEstimator.getLastFrameTime()
-    const fps = this.fpsEstimator.getFps()
+    const prevTime = this.tpsEstimator.getPrevTime()
+    const tps = this.tpsEstimator.get()
 
-    const targetFpsDiff = fps - this.TARGET_FPS
+    const targetTpsDiff = tps - this.TARGET_TPS
 
-    if (targetFpsDiff > 0) {
+    if (targetTpsDiff > 0) {
       this.simulation.addBoidsIfMissing(100)
 
       // Slow down to avoid rendering too fast at first
-      const waitTime = this.TARGET_FRAME_TIME - (performance.now() - prevFrameTime)
+      const waitTime = this.TARGET_TICK_TIME - (performance.now() - prevTime)
       if (waitTime > 0) {
         await new Promise((resolve) => setTimeout(resolve, waitTime))
       }
-    } else if (targetFpsDiff <= -8) {
+    } else if (targetTpsDiff <= -8) {
       this.simulation.removeBoids(5)
     }
 
@@ -120,7 +120,7 @@ export class Controller {
     this.simulation.update(this.flightZone, maxHeight)
 
     // Update FPS estimation
-    this.fpsEstimator.update()
+    this.tpsEstimator.update()
     // Trigger next resize check
     this.simulationLoopId = requestAnimationFrame(this.simulationLoop.bind(this))
   }

@@ -1,4 +1,4 @@
-import { vec3 } from "gl-matrix"
+import { vec3, vec2 } from "gl-matrix"
 
 import { isInPolygon } from "./utilities/rayCasting2D"
 
@@ -30,7 +30,8 @@ export class FlightZone {
   private canvasBox: Box
 
   paddingRatio: number
-  maxDepth: number
+  readonly maxDepth: number
+  readonly halfDepth: number
   private polygon: vec3[]
   private centroids: vec3[]
 
@@ -38,6 +39,7 @@ export class FlightZone {
     this.canvasBox = canvasBox
     this.paddingRatio = paddingRatio
     this.maxDepth = maxDepth
+    this.halfDepth = maxDepth / 2
 
     this.polygon = this.defaultPolygon()
     this.centroids = []
@@ -45,20 +47,19 @@ export class FlightZone {
 
   // Polygon
   private defaultPolygon(): vec3[] {
-    const halfDepth = this.maxDepth / 2
     const pad = Math.min(
       this.canvasBox.width * this.paddingRatio,
       this.canvasBox.height * this.paddingRatio,
     )
     const defaultPolygon = [
       // left-top
-      vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.start.y + pad, halfDepth),
+      vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.start.y + pad, this.halfDepth),
       // right-top
-      vec3.fromValues(this.canvasBox.end.x - pad, this.canvasBox.start.y + pad, halfDepth),
+      vec3.fromValues(this.canvasBox.end.x - pad, this.canvasBox.start.y + pad, this.halfDepth),
       // right-bottom
-      vec3.fromValues(this.canvasBox.end.x - pad, this.canvasBox.end.y - pad, halfDepth),
+      vec3.fromValues(this.canvasBox.end.x - pad, this.canvasBox.end.y - pad, this.halfDepth),
       // left-bottom
-      vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.end.y - pad, halfDepth),
+      vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.end.y - pad, this.halfDepth),
     ]
     return defaultPolygon
   }
@@ -74,12 +75,12 @@ export class FlightZone {
   getCentroids(): Readonly<vec3[]> {
     return this.centroids
   }
-  addCentroid(pointOnCanvas: vec3): void {
-    const point = vec3.clone(pointOnCanvas)
-    point[0] += this.canvasBox.start.x
-    point[1] += this.canvasBox.start.y
-    point[2] = Math.max(0, Math.min(this.maxDepth, point[2]))
-
+  addCentroid(pointOnCanvas: vec2): void {
+    const point = vec3.fromValues(
+      pointOnCanvas[0] + this.canvasBox.start.x,
+      pointOnCanvas[1] + this.canvasBox.start.y,
+      this.halfDepth,
+    )
     this.centroids.push(point)
   }
   clearCentroids(): void {
