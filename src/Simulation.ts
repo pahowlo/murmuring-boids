@@ -50,6 +50,9 @@ export class Simulation {
   getConfig(): Readonly<SimulationConfig> {
     return this.config
   }
+  getCenterOwMass(): Readonly<vec3> {
+    return this.spatialGrid.centerOwMass
+  }
 
   resize(newSimBox: Box, maxDepth?: number): void {
     this.simBox = newSimBox

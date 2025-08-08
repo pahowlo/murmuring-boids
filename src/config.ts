@@ -22,6 +22,8 @@ export interface RendererConfig {
   }
   debug: {
     flightZone: { polygonColor: string; centroidsColor: string }
+    centerOwMassColor: string
+    maxHeightColor: string
   }
 }
 
