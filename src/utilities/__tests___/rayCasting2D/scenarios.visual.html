@@ -1,135 +1,148 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-   <style>
-      body { margin: 20px; font-family: Arial, sans-serif; }
-      canvas { border: 1px solid #ccc; cursor: crosshair; }
-      #coords { margin-top: 10px; font-family: monospace; }
-      #points { margin-top: 10px; font-family: monospace; }
-   </style>
-</head>
-<body>
-   <h2>Scenario parameters</h2>
-   <canvas id="canvas" width="800" height="600"></canvas>
-   <div id="coords">Mouse: (0, 0)</div>
-   <div id="points">Clicked Points: []</div>
+  <head>
+    <style>
+      body {
+        margin: 20px;
+        font-family: Arial, sans-serif;
+      }
+      canvas {
+        border: 1px solid #ccc;
+        cursor: crosshair;
+      }
+      #coords {
+        margin-top: 10px;
+        font-family: monospace;
+      }
+      #points {
+        margin-top: 10px;
+        font-family: monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Scenario parameters</h2>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <div id="coords">Mouse: (0, 0)</div>
+    <div id="points">Clicked Points: []</div>
 
-   <script src="scenarios.js"></script>
-   <script type="module">
-      console.log(scenarios);
+    <script src="scenarios.js"></script>
+    <script type="module">
+      console.log(scenarios)
 
-      const canvas = document.getElementById('canvas');
-      const ctx = canvas.getContext('2d');
-      const coordsDiv = document.getElementById('coords');
-      const pointsDiv = document.getElementById('points');
+      const canvas = document.getElementById("canvas")
+      const ctx = canvas.getContext("2d")
+      const coordsDiv = document.getElementById("coords")
+      const pointsDiv = document.getElementById("points")
 
-      let clickedPoints = [];
+      let clickedPoints = []
 
+      function drawPolygon(points, color = "#3498db", fill = true) {
+        if (points.length < 3) return
 
-      function drawPolygon(points, color = '#3498db', fill = true) {
-          if (points.length < 3) return;
+        ctx.beginPath()
+        ctx.moveTo(points[0][0], points[0][1])
+        for (let i = 1; i < points.length; i++) {
+          ctx.lineTo(points[i][0], points[i][1])
+        }
+        ctx.closePath()
 
-          ctx.beginPath();
-          ctx.moveTo(points[0][0], points[0][1]);
-          for (let i = 1; i < points.length; i++) {
-             ctx.lineTo(points[i][0], points[i][1]);
-          }
-          ctx.closePath();
+        if (fill) {
+          ctx.fillStyle = color + "40"
+          ctx.fill()
+        }
 
-          if (fill) {
-             ctx.fillStyle = color + '40';
-             ctx.fill();
-          }
+        ctx.strokeStyle = color
+        ctx.lineWidth = 2
+        ctx.stroke()
 
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          // Draw points
-          ctx.fillStyle = color;
-          points.forEach(([x, y]) => {
-             ctx.beginPath();
-             ctx.arc(x, y, 3, 0, 2 * Math.PI);
-             ctx.fill();
-          });
+        // Draw points
+        ctx.fillStyle = color
+        points.forEach(([x, y]) => {
+          ctx.beginPath()
+          ctx.arc(x, y, 3, 0, 2 * Math.PI)
+          ctx.fill()
+        })
       }
 
       function drawClickedPoints() {
-          // Draw individual clicked points
-          ctx.fillStyle = '#bbbbbb';
-          clickedPoints.forEach(([x, y], index) => {
-              ctx.beginPath();
-              ctx.arc(x, y, 5, 0, 2 * Math.PI);
-              ctx.fill();
+        // Draw individual clicked points
+        ctx.fillStyle = "#bbbbbb"
+        clickedPoints.forEach(([x, y], index) => {
+          ctx.beginPath()
+          ctx.arc(x, y, 5, 0, 2 * Math.PI)
+          ctx.fill()
 
-              // Label the points
-              ctx.fillStyle = '#333';
-              ctx.font = '12px Arial';
-              ctx.fillText(index.toString(), x + 8, y - 8);
-              ctx.fillStyle = '#bbbbbb';
-          });
+          // Label the points
+          ctx.fillStyle = "#333"
+          ctx.font = "12px Arial"
+          ctx.fillText(index.toString(), x + 8, y - 8)
+          ctx.fillStyle = "#bbbbbb"
+        })
       }
 
       function draw() {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-          // Draw pre-defined
-          for (const scenario of scenarios) {
-            drawPolygon(scenario["polygon"], '#3498db');
+        // Draw pre-defined
+        for (const scenario of scenarios) {
+          drawPolygon(scenario["polygon"], "#3498db")
 
-            // Draw points
-            scenario["points"].forEach((point, index) => {
-              const [x, y] = point["coord"];
-              if (point["isInPolygon"]) {
-                ctx.fillStyle = '#2ecc71'; // Green for inside points
-              } else {
-                ctx.fillStyle = '#e74c3c'; // Red for outside points
-              }
-              ctx.beginPath();
-              ctx.arc(x, y, 5, 0, 2 * Math.PI);
-              ctx.fill();
+          // Draw points
+          if (!scenario["points"]) continue
+          
+          scenario["points"].forEach((point, index) => {
+            const [x, y] = point["coord"]
+            if (point["isInPolygon"]) {
+              ctx.fillStyle = "#2ecc71" // Green for inside points
+            } else {
+              ctx.fillStyle = "#e74c3c" // Red for outside points
+            }
+            ctx.beginPath()
+            ctx.arc(x, y, 5, 0, 2 * Math.PI)
+            ctx.fill()
 
-              // Label the points
-              ctx.fillStyle = '#333';
-              ctx.font = '12px Arial';
-              ctx.fillText(index.toString(), x + 8, y - 8);
-              ctx.fillStyle = '#e74c3c';
-            });
-          }
+            // Label the points
+            ctx.fillStyle = "#333"
+            ctx.font = "12px Arial"
+            ctx.fillText(index.toString(), x + 8, y - 8)
+            ctx.fillStyle = "#e74c3c"
+          })
+        }
 
-          // Draw clicked points and connecting lines
-          drawClickedPoints();
+        // Draw clicked points and connecting lines
+        drawClickedPoints()
       }
 
       // Mouse move - show coordinates
-      canvas.addEventListener('mousemove', (e) => {
-          const rect = canvas.getBoundingClientRect();
-          const x = Math.round(e.clientX - rect.left);
-          const y = Math.round(e.clientY - rect.top);
-          coordsDiv.textContent = `Mouse: (${x}, ${y})`;
-      });
+      canvas.addEventListener("mousemove", (e) => {
+        const rect = canvas.getBoundingClientRect()
+        const x = Math.round(e.clientX - rect.left)
+        const y = Math.round(e.clientY - rect.top)
+        coordsDiv.textContent = `Mouse: (${x}, ${y})`
+      })
 
       // Click to add points
-      canvas.addEventListener('click', (e) => {
-          const rect = canvas.getBoundingClientRect();
-          const x = Math.round(e.clientX - rect.left);
-          const y = Math.round(e.clientY - rect.top);
+      canvas.addEventListener("click", (e) => {
+        const rect = canvas.getBoundingClientRect()
+        const x = Math.round(e.clientX - rect.left)
+        const y = Math.round(e.clientY - rect.top)
 
-          clickedPoints.push([x, y]);
-          pointsDiv.textContent = `Clicked Points: [${clickedPoints.map(p => `[${p[0]}, ${p[1]}]`).join(', ')}]`;
+        clickedPoints.push([x, y])
+        pointsDiv.textContent = `Clicked Points: [${clickedPoints.map((p) => `[${p[0]}, ${p[1]}]`).join(", ")}]`
 
-          draw();
-      });
+        draw()
+      })
 
       // Double click to clear
-      canvas.addEventListener('dblclick', () => {
-          clickedPoints = [];
-          pointsDiv.textContent = `Clicked Points: []`;
-          draw();
-      });
+      canvas.addEventListener("dblclick", () => {
+        clickedPoints = []
+        pointsDiv.textContent = `Clicked Points: []`
+        draw()
+      })
 
       // Initial draw
-      draw();
-   </script>
-</body>
+      draw()
+    </script>
+  </body>
 </html>

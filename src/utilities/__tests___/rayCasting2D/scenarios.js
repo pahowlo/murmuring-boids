@@ -129,6 +129,59 @@ const scenarios = [
       { coord: [414, 419], isInPolygon: false },
     ],
   },
+  // Hourglass
+  {
+    polygon: [
+      [510, 60],
+      [530, 40],
+      [600, 80],
+      [630, 120],
+      [700, 160],
+      [720, 140],
+      [720, 60],
+      [700, 40],
+      [630, 80],
+      [600, 120],
+      [530, 160],
+      [510, 140],
+    ],
+    points: [
+      { coord: [502, 98], isInPolygon: false },
+      { coord: [592, 63], isInPolygon: false },
+      { coord: [616, 116], isInPolygon: false },
+      { coord: [723, 156], isInPolygon: false },
+      { coord: [534, 55], isInPolygon: true },
+      { coord: [603, 97], isInPolygon: true },
+      { coord: [659, 79], isInPolygon: true },
+      { coord: [701, 148], isInPolygon: true },
+    ],
+  },
+  // Zigzag
+  {
+    polygon: [
+      [650, 270],
+      [590, 320],
+      [735, 340],
+      [570, 415],
+      [780, 425],
+      [720, 435],
+      [760, 440],
+      [605, 505],
+      [735, 525],
+    ],
+    points: [
+      { coord: [616, 286], isInPolygon: false },
+      { coord: [689, 321], isInPolygon: false },
+      { coord: [667, 365], isInPolygon: false },
+      { coord: [756, 436], isInPolygon: false },
+      { coord: [701, 453], isInPolygon: false },
+      { coord: [722, 514], isInPolygon: true },
+      { coord: [643, 504], isInPolygon: true },
+      { coord: [728, 429], isInPolygon: true },
+      { coord: [723, 450], isInPolygon: true },
+      { coord: [690, 355], isInPolygon: true },
+    ],
+  },
 ]
 
 /* eslint-disable no-undef */
