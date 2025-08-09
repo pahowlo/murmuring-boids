@@ -9,10 +9,8 @@ export default [
     files: ["**/*.ts", "**/*.tsx"],
     rules: {
       // ERROR
-      // Enforce no semicolon for consistency
+      // Enforce no semicolon for consistency ð
       semi: ["error", "never"],
-      // Ensure consistent indentation
-      indent: ["error", 2],
       // Enforce trailing commas to reduce diff noise
       "comma-dangle": ["error", "always-multiline"],
       // Enforce returning a consistent a value, or consistently nothing.
@@ -33,7 +31,7 @@ export default [
         "error",
         {
           // Select Program to fire only once for the root of the file
-          selector: "Program", 
+          selector: "Program",
           message: ".spec.ts file found. Use .test.ts instead for consistency,",
         },
       ],

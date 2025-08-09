@@ -107,6 +107,7 @@ export class Simulation {
     if (!this.isRunning) return
 
     this.spatialGrid.maxItemCount = this.maxBoidCount // Just in case it changed
+    const randomSeed = Math.random()
 
     for (const boid of this.boids) {
       const neighbors = this.spatialGrid.getNeighbors(boid, this.config.grid.neighborDistance)
@@ -124,6 +125,7 @@ export class Simulation {
         maxHeight,
         this.config.visibleDistance,
         this.config.visibleDepth,
+        randomSeed
       )
       this.spatialGrid.update(boid)
     }

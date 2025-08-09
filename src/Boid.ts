@@ -2,6 +2,7 @@ import { vec3 } from "gl-matrix"
 
 import type { BoidConfig } from "./config"
 import { limitTurn } from "./utilities/constraints"
+import { closestOrthogonalDirectionToPolygon } from "./utilities/polygon"
 import { FlightZone } from "./FlightZone"
 
 export const defaultBoidConfig: BoidConfig = {
@@ -9,9 +10,9 @@ export const defaultBoidConfig: BoidConfig = {
   maxSpeed: 5,
   maxTurnAngleDeg: 140,
   acceleration: {
-    backToFlightZone: 1.2,
+    backToFlightZone: 0.8,
     stayCloseToCenterOwfMass: 0.1,
-    followCentroids: 0.8,
+    followCentroids: 0.9,
     pullUpTerrain: 1.8,
     cohesion: 0.6,
     alignment: 1.2,
@@ -29,6 +30,7 @@ export class Boid {
 
   private config: BoidConfig
 
+  private wasOutside: boolean = false
   private backToFlightZone?: {
     direction: vec3
     remainingTicks: number
@@ -75,6 +77,7 @@ export class Boid {
     maxHeight: number,
     visibleDistance: number,
     visibleDepth: number,
+    randomSeed: number,
   ): void {
     let maxTurnAngleDeg = this.config.maxTurnAngleDeg
     let maxSpeed = this.config.maxSpeed
@@ -93,18 +96,26 @@ export class Boid {
     // Boundary check: Get back to flight zone if outside
     const polygon = flightZone.getPolygon()
 
-    if (!this.backToFlightZone && flightZone.isOutside(this.position)) {
-      const turnBackDirection = vec3.create()
-      for (let _ = 0; _ < 1; _++) {
-        const idx = Math.floor(Math.random() * polygon.length)
-        const point = polygon[idx]
-        const diff = vec3.subtract(vec3.create(), point, this.position)
-        vec3.add(turnBackDirection, turnBackDirection, diff)
-      }
-      vec3.normalize(turnBackDirection, turnBackDirection)
-      this.backToFlightZone = {
-        direction: turnBackDirection,
-        remainingTicks: 30,
+    if (!this.backToFlightZone) {
+      if (!flightZone.isOutside(this.position)) {
+        this.wasOutside = false
+      } else {
+        const turnBackDirection = vec3.create()
+        if (!this.wasOutside) {
+          // Go the opposite direction
+          const closestOrthoDir = closestOrthogonalDirectionToPolygon(polygon, this.position)
+          vec3.copy(turnBackDirection, closestOrthoDir)
+        } else {
+          // Use randomSeed to select a polygon vertex to turn back towards
+          const randomIdx = Math.floor(randomSeed * polygon.length)
+          vec3.subtract(turnBackDirection, polygon[randomIdx], this.position)
+        }
+        vec3.normalize(turnBackDirection, turnBackDirection)
+        this.backToFlightZone = {
+          direction: turnBackDirection,
+          remainingTicks: 30,
+        }
+        this.wasOutside = true
       }
     }
     if (this.backToFlightZone) {
@@ -126,14 +137,13 @@ export class Boid {
     if (!this.followCentroids && centroids.length > 0) {
       const followDirection = vec3.create()
       for (const point of centroids) {
-        const diff = vec3.subtract(vec3.create(), point, this.position)
-        const manhattanDist = Math.abs(diff[0]) + Math.abs(diff[1])
-        const manhattanInvDist = visibleDistance - manhattanDist
-        if (manhattanInvDist <= 0) {
-          continue
+        const vec = vec3.subtract(vec3.create(), point, this.position)
+        const manDist = Math.abs(vec[0]) + Math.abs(vec[1])
+        if (manDist >= visibleDistance) {
+          continue // Not visible
         }
-        vec3.scale(diff, diff, manhattanInvDist / manhattanDist)
-        vec3.add(followDirection, followDirection, diff)
+        vec3.scale(vec, vec, (visibleDistance - manDist) / manDist)
+        vec3.add(followDirection, followDirection, vec)
       }
       vec3.normalize(followDirection, followDirection)
       this.followCentroids = {
