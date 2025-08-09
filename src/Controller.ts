@@ -1,9 +1,17 @@
 import type { BoidConfig, RendererConfig } from "./config"
 import { FreqEstimator } from "./utilities/freqEstimator"
 import { MouseStatus } from "./inputs/MouseStatus"
+import { PolygonDrawer } from "./inputs/PolygonDrawer"
 import { FlightZone } from "./FlightZone"
 import { Renderer } from "./Renderer"
 import { Simulation } from "./Simulation"
+
+type renderingTask = {
+  eTag: number // Too invalidate if no longer needed
+  endTime?: number
+  render?: () => void
+  endCallback?: () => void
+}
 
 export class Controller {
   private renderer: Renderer
@@ -11,6 +19,7 @@ export class Controller {
   private simulation: Simulation
   private inputs: {
     mouseStatus: MouseStatus
+    polygonDrawer: PolygonDrawer
   }
 
   readonly TARGET_TPS = 30
@@ -23,6 +32,8 @@ export class Controller {
   private simulationLoopId?: number = undefined
   private renderingLoopId?: number = undefined
 
+  private activeRenderingTasks: Map<string, renderingTask> = new Map()
+
   constructor(
     window: Window,
     canvas: HTMLCanvasElement,
@@ -33,6 +44,7 @@ export class Controller {
     this.flightZone = new FlightZone(this.renderer.canvasBox, this.simulation.getConfig().maxDepth)
     this.inputs = {
       mouseStatus: new MouseStatus(canvas),
+      polygonDrawer: new PolygonDrawer(canvas),
     }
 
     this.TARGET_TICK_TIME = 1000 / this.TARGET_TPS
@@ -111,7 +123,7 @@ export class Controller {
     if (this.debug) {
       this.renderer.drawFlightZone(this.flightZone, this.simulation.getConfig().visibleDistance)
     }
-    
+
     // Forground
     this.simulation.boids.forEach((boid) => {
       this.renderer.drawBoid(boid, this.simulation.getConfig().maxDepth)
@@ -122,8 +134,77 @@ export class Controller {
       this.renderer.drawStats(this.simulation.boidCount(), tps, this.TARGET_TPS)
     }
 
+    this.refreshRenderingTasks()
+
     // Request next frame
     this.renderingLoopId = requestAnimationFrame(this.renderingLoop.bind(this))
+  }
+
+  private refreshRenderingTasks(): void {
+    const { state, eTag } = this.inputs.polygonDrawer.getState()
+    const prevETag = this.activeRenderingTasks.get("draftPolygon")?.eTag
+    if (eTag !== prevETag) {
+      const polygonOnCanvas = this.inputs.polygonDrawer.getPolygonOnCanvas()
+      let endTime: number
+      switch (state) {
+        case null:
+          // Clear, nothing to see here
+          this.activeRenderingTasks.set("draftPolygon", { eTag })
+          this.flightZone.resetPolygon()
+          break
+
+        case "drawing":
+          this.activeRenderingTasks.set("draftPolygon", {
+            eTag,
+            render: () => this.renderer.drawDraftPolygon(polygonOnCanvas, false),
+          })
+          break
+
+        case "failed":
+          endTime = performance.now() + 2_020
+          this.activeRenderingTasks.set("draftPolygon", {
+            eTag,
+            endTime,
+            render: () =>
+              this.renderer.drawDraftPolygon(
+                polygonOnCanvas,
+                false,
+                "#ff0000",
+                endTime - performance.now(),
+                3, // Blinking factor
+              ),
+          })
+          break
+
+        case "closed":
+          endTime = performance.now() + 5_020
+          this.activeRenderingTasks.set("draftPolygon", {
+            eTag,
+            endTime,
+            render: () =>
+              this.renderer.drawDraftPolygon(
+                polygonOnCanvas,
+                true,
+                undefined,
+                endTime - performance.now(),
+              ),
+            endCallback: () => {
+              this.flightZone.setPolygon(polygonOnCanvas)
+            },
+          })
+          break
+      }
+    }
+    // Render active task
+    this.activeRenderingTasks.forEach((task, key) => {
+      if (!task.render) return
+      if (task.endTime && performance.now() >= task.endTime) {
+        task.endCallback?.()
+        this.activeRenderingTasks.set(key, { eTag: task.eTag })
+        return
+      }
+      task.render()
+    })
   }
 
   stop(): void {

@@ -1,7 +1,7 @@
 import { vec2 } from "gl-matrix"
 import { isInPolygon } from "./rayCasting2D"
 
-import { scenarios } from "./__tests___/rayCasting2D/scenarios"
+import { scenarios } from "./__tests___/scenarios"
 
 describe("Polygon scenarios", () => {
   for (const [idx, scenario] of scenarios.entries()) {

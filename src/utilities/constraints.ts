@@ -21,7 +21,7 @@ export function limitTurn(out: vec3, velocity: vec3, acceleration: vec3, maxAngl
   }
 
   // Calculate interpolation factor to limit to maxAngle.
-  // Linear interpolation (lerp) can underestimate the angle up to 15% for 120 degrees 
+  // Linear interpolation (lerp) can underestimate the angle up to 15% for 120 degrees
   // hence the manual adjustment.
   // TODO: implement spherical interpolation (slerp) to avoid this.
   const t = (maxAngleRad + 20) / angleRad

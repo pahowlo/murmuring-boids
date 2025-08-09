@@ -1,6 +1,7 @@
 import { vec3, vec2 } from "gl-matrix"
 
 import type { RendererConfig } from "./config"
+import { HashPatternStyle } from "./utilities/canvas"
 import { Boid } from "./Boid"
 import { FlightZone, Box } from "./FlightZone"
 
@@ -55,6 +56,8 @@ export class Renderer {
   private screenHasTopLeft: boolean = false
 
   private boidPath: Path2D = setupBoidPath()
+
+  private patternCache: { [name: string]: CanvasPattern } = {}
 
   constructor(
     window: Window,
@@ -236,14 +239,22 @@ export class Renderer {
     ctx.lineWidth = 1
     // Draw flight zone polygon
     ctx.strokeStyle = this.config.debug.flightZone.polygonColor
+    let fillStyle = this.patternCache["flightZoneFillStyle"]
+    if (!fillStyle) {
+      // 17 ~ 10% opacity of 255 in hex
+      fillStyle = HashPatternStyle(this.config.debug.flightZone.polygonColor + "17", 8)
+      this.patternCache["flightZoneFillStyle"] = fillStyle
+    }
+    ctx.fillStyle = fillStyle
+    ctx.setLineDash([4, 6]) // dash, gap
     ctx.beginPath()
-    ctx.setLineDash([4, 6]) // 4px dash, 6
     ctx.moveTo(polygon[0][0] - startX, polygon[0][1] - startY)
     for (let i = 1; i < polygon.length; i++) {
       ctx.lineTo(polygon[i][0] - startX, polygon[i][1] - startY)
     }
     ctx.closePath()
     ctx.stroke()
+    ctx.fill("evenodd")
 
     // Draw centroids
     ctx.strokeStyle = this.config.debug.flightZone.centroidsColor
@@ -259,7 +270,7 @@ export class Renderer {
       ctx.lineTo(x, y + radius)
       ctx.stroke()
 
-      ctx.setLineDash([4, 6]) // 4px dash, 6px gap
+      ctx.setLineDash([4, 6]) // dash, gap
       ctx.beginPath()
       ctx.arc(x, y, visibleRange, 0, 2 * Math.PI)
       ctx.stroke()
@@ -268,39 +279,78 @@ export class Renderer {
     ctx.restore()
   }
 
-  drawDraftPolygon(draftPolygon: vec2[], closed: boolean): void {
-    const startX = 0 // this.canvasBox.start.x
-    const startY = 0 // this.canvasBox.start.y
+  drawDraftPolygon(
+    polygonOnCanvas: vec2[],
+    closed: boolean,
+    hexColor?: string,
+    remainingTime?: number,
+    blinkingFactor: number = 1,
+  ): void {
+    const startX = 0 // No offset since polygon was drawn on canvas
+    const startY = 0
 
-    const length = closed ? draftPolygon.length : draftPolygon.length - 1
+    const ptRadius = 5
 
     const ctx = this.renderingContext
     ctx.save()
 
     // Draw flight zone polygon
-    ctx.strokeStyle = "#666666"
-    ctx.globalAlpha = 0.5
-    ctx.lineWidth = 1
-    ctx.setLineDash([4, 6]) // 4px dash, 6px gap
-    const radius = 10
-
-    ctx.beginPath()
-    let x = draftPolygon[0][0] - startX
-    let y = draftPolygon[0][1] - startY
-    if (!closed) {
-      // No need to draw the start point if closed. It will be drawn at the end.
-      ctx.arc(x, y, radius, 0, 2 * Math.PI)
+    const color = hexColor || "#888888"
+    if (remainingTime != null) {
+      const alphaFactor = ((remainingTime / 500) * blinkingFactor) % 2
+      ctx.globalAlpha = alphaFactor > 1 ? 2 - alphaFactor : alphaFactor
     }
+    ctx.lineWidth = 1
+    ctx.strokeStyle = color
+
+    let x = polygonOnCanvas[0][0] - startX
+    let y = polygonOnCanvas[0][1] - startY
+    ctx.beginPath()
+    ctx.arc(x, y, 10, 0, 2 * Math.PI)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(x - ptRadius, y)
+    ctx.lineTo(x + ptRadius, y)
+    ctx.moveTo(x, y - ptRadius)
+    ctx.lineTo(x, y + ptRadius)
+    ctx.stroke()
+
+    let fillStyle = this.patternCache["DraftPolygonFillStyle"]
+    if (!fillStyle) {
+      // 33 ~ 20% opacity of 255 in hex
+      fillStyle = HashPatternStyle(color + "33", 8)
+      this.patternCache["DraftPolygonFillStyle"] = fillStyle
+    }
+    ctx.fillStyle = fillStyle
+    // Draw polygon
+    ctx.setLineDash([4, 4]) // dash, gap
+    ctx.beginPath()
     ctx.moveTo(x, y)
-    for (let i = 1; i < length; i++) {
-      x = draftPolygon[i][0] - startX
-      y = draftPolygon[i][1] - startY
-      // Draw point
-      ctx.arc(x, y, radius, 0, 2 * Math.PI)
+    for (let i = 1; i < polygonOnCanvas.length; i++) {
+      x = polygonOnCanvas[i][0] - startX
+      y = polygonOnCanvas[i][1] - startY
       // Draw line to next point
       ctx.lineTo(x, y)
     }
-    ctx.closePath()
+    if (closed) {
+      ctx.closePath()
+      ctx.fill("evenodd")
+    }
+    ctx.stroke()
+
+    // Draw vertices
+    ctx.setLineDash([]) // Solid line
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    for (let i = 0; i < polygonOnCanvas.length; i++) {
+      x = polygonOnCanvas[i][0] - startX
+      y = polygonOnCanvas[i][1] - startY
+      // Draw line to next point
+      ctx.moveTo(x - ptRadius, y)
+      ctx.lineTo(x + ptRadius, y)
+      ctx.moveTo(x, y - ptRadius)
+      ctx.lineTo(x, y + ptRadius)
+    }
     ctx.stroke()
 
     ctx.restore()

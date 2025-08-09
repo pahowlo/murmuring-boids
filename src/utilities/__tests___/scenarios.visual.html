@@ -48,8 +48,9 @@
         ctx.closePath()
 
         if (fill) {
-          ctx.fillStyle = color + "40"
-          ctx.fill()
+          // 33 ~ 20% opacity of 255 in hex
+          ctx.fillStyle = color + "33"
+          ctx.fill("evenodd")
         }
 
         ctx.strokeStyle = color
@@ -90,7 +91,7 @@
 
           // Draw points
           if (!scenario["points"]) continue
-          
+
           scenario["points"].forEach((point, index) => {
             const [x, y] = point["coord"]
             if (point["isInPolygon"]) {

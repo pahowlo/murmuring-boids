@@ -6,12 +6,12 @@ import { FlightZone } from "./FlightZone"
 
 export const defaultBoidConfig: BoidConfig = {
   minSpeed: 1,
-  maxSpeed: 6,
-  maxTurnAngleDeg: 120,
+  maxSpeed: 5,
+  maxTurnAngleDeg: 140,
   acceleration: {
-    backToFlightZone: 0.6,
+    backToFlightZone: 1.2,
     stayCloseToCenterOwfMass: 0.1,
-    followCentroids: 0.6,
+    followCentroids: 0.8,
     pullUpTerrain: 1.8,
     cohesion: 0.6,
     alignment: 1.2,
@@ -95,7 +95,7 @@ export class Boid {
 
     if (!this.backToFlightZone && flightZone.isOutside(this.position)) {
       const turnBackDirection = vec3.create()
-      for (let _ = 0; _ < 2; _++) {
+      for (let _ = 0; _ < 1; _++) {
         const idx = Math.floor(Math.random() * polygon.length)
         const point = polygon[idx]
         const diff = vec3.subtract(vec3.create(), point, this.position)
