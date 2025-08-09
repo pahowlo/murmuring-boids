@@ -32,7 +32,7 @@ export class PolygonDrawer {
     this._state = newState
     this._eTag++
     switch (newState) {
-      case "closed":
+      case "closed": {
         const validatedPolygon = validatePolygon(this.polygonOnCanvas)
         if (validatedPolygon) {
           this.polygonOnCanvas = validatedPolygon
@@ -40,6 +40,7 @@ export class PolygonDrawer {
         }
         this._state = "failed"
         break
+      }
     }
   }
 
@@ -51,36 +52,49 @@ export class PolygonDrawer {
   }
 
   private setupListeners(canvas: HTMLCanvasElement): void {
-    canvas.addEventListener("mousedown", (e) => {
-      const canvasPt = vec2.fromValues(e.clientX, e.clientY)
+    let clickTimeoutId: number = 0
 
-      switch (this.state) {
-        case null:
-        case "failed":
-        case "closed":
-          // Start a new polygon
-          this.polygonOnCanvas = [canvasPt]
-          this.state = "drawing"
-          break
+    canvas.addEventListener("click", (e) => {
+      if (clickTimeoutId) return // Prevent click spamming
 
-        case "drawing":
-          const start = this.polygonOnCanvas[0]
-          const manhattanDist = Math.abs(canvasPt[0] - start[0]) + Math.abs(canvasPt[1] - start[1])
-          if (manhattanDist <= this.CLOSING_RADIUS) {
-            // Close polygon since we clicked near the starting point
-            this.state = "closed"
+      const dblclickThreshold = this.polygonOnCanvas.length > 0 ? 200 : 0
+
+      clickTimeoutId = setTimeout(() => {
+        clickTimeoutId = 0 // reset
+        const canvasPt = vec2.fromValues(e.clientX, e.clientY)
+
+        switch (this.state) {
+          case null:
+          case "failed":
+          case "closed": {
+            // Start a new polygon
+            this.polygonOnCanvas = [canvasPt]
+            this.state = "drawing"
             break
           }
-          // Add point to polygon
-          this.polygonOnCanvas.push(canvasPt)
-          break
-
-        default:
-          throw new Error(`Unexpected polygon state: ${this.state}`)
-      }
+          case "drawing": {
+            const start = this.polygonOnCanvas[0]
+            const manDist = Math.abs(canvasPt[0] - start[0]) + Math.abs(canvasPt[1] - start[1])
+            if (manDist <= this.CLOSING_RADIUS) {
+              // Close polygon since we clicked near the starting point
+              this.state = "closed"
+              break
+            }
+            // Add point to polygon
+            this.polygonOnCanvas.push(canvasPt)
+            break
+          }
+          default:
+            throw new Error(`Unexpected polygon state: ${this.state}`)
+        }
+      }, dblclickThreshold)
     })
 
     canvas.addEventListener("dblclick", () => {
+      if (clickTimeoutId) {
+        clearTimeout(clickTimeoutId)
+        clickTimeoutId = 0
+      }
       switch (this.state) {
         case null:
           // Nothing to do

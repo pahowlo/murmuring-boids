@@ -44,3 +44,58 @@ function segmentDirection<T extends vec2 | vec3>(start: T, end: T): [number, num
   const maxDist = Math.max(Math.abs(dx), Math.abs(dy))
   return [dx / maxDist, dy / maxDist]
 }
+
+/**
+ * Find the closest orthogonal direction to a polygon edge from a given position.
+ * No segment limit here, polygon edges are considered as infinite lines.
+ */
+export function closestOrthogonalDirectionToPolygon(
+  polygon: vec3[] | Readonly<vec3[]>,
+  position: vec3,
+): vec3 {
+  let minDist = Infinity
+  let closestOrthoVec = vec3.create()
+
+  const n = polygon.length
+  if (n === 0) {
+    throw new Error("Polygon must have at least one vertex")
+  }
+
+  // Find closest edge to position
+  for (let i = 0; i < n; i++) {
+    const start = polygon[i]
+    const end = polygon[i !== n - 1 ? i + 1 : 0]
+
+    const edgeDir = [end[0] - start[0], end[1] - start[1]]
+    // Orthogonal direction (right-hand)
+    const edgeOrthoDir = [-edgeDir[1], edgeDir[0]]
+
+    // Parametric: a + t*edge = position + s*ortho
+    // Solve for t and s
+    const det = edgeDir[0] * edgeOrthoDir[1] - edgeDir[1] * edgeOrthoDir[0]
+    if (det < 1e-6) {
+      // Polygon contains a very small edge, skip
+      continue
+    }
+
+    const dx = position[0] - start[0]
+    const dy = position[1] - start[1]
+
+    // Cramer's rule
+    const t = (dx * edgeOrthoDir[1] - dy * edgeOrthoDir[0]) / det
+
+    // Intersection point on edge line
+    const orthoVec = vec3.fromValues(
+      start[0] + t * edgeDir[0] - position[0],
+      start[1] + t * edgeDir[1] - position[1],
+      0,
+    )
+    const manDist = Math.abs(orthoVec[0]) + Math.abs(orthoVec[1])
+
+    if (manDist < minDist) {
+      minDist = manDist
+      closestOrthoVec = orthoVec
+    }
+  }
+  return closestOrthoVec!
+}
