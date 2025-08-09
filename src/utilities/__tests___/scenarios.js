@@ -182,6 +182,35 @@ const scenarios = [
       { coord: [690, 355], isInPolygon: true },
     ],
   },
+  // Fuzzy Star
+  {
+    polygon: [
+      [495, 450],
+      [565, 560],
+      [450, 525],
+      [560, 465],
+      [500, 580],
+      [470, 475],
+      [570, 515],
+      [460, 570],
+    ],
+    points: [
+      { coord: [526, 476], isInPolygon: false },
+      { coord: [482, 471], isInPolygon: false },
+      { coord: [467, 503], isInPolygon: false },
+      { coord: [525, 563], isInPolygon: false },
+      { coord: [412, 582], isInPolygon: false },
+      { coord: [553, 500], isInPolygon: false },
+      { coord: [541, 514], isInPolygon: true },
+      { coord: [498, 482], isInPolygon: true },
+      { coord: [508, 522], isInPolygon: true },
+      { coord: [518, 545], isInPolygon: false },
+      { coord: [519, 492], isInPolygon: false },
+      { coord: [493, 494], isInPolygon: false },
+      { coord: [479, 547], isInPolygon: true },
+      { coord: [557, 554], isInPolygon: true },
+    ],
+  },
 ]
 
 /* eslint-disable no-undef */
