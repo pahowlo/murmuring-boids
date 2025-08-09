@@ -10,7 +10,6 @@ export interface BoidConfig {
     cohesion: number
     alignment: number
     separation: number
-    gravity: number
   }
 }
 
@@ -20,6 +19,7 @@ export interface RendererConfig {
     lineWidth: number
     size: number
   }
+  flightZone: { polygonColor: string }
   debug: {
     flightZone: { polygonColor: string; centroidsColor: string }
     centerOwMassColor: string
@@ -35,6 +35,7 @@ interface gridDistance {
 }
 
 export interface SimulationConfig {
+  gravity: number
   maxDepth: number
   visibleDistance: number
   visibleDepth: number

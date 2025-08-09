@@ -11,6 +11,9 @@ export const defaultRendererConfig: RendererConfig = {
     lineWidth: 0.1,
     size: 3,
   },
+  flightZone: {
+    polygonColor: "#888888",
+  },
   debug: {
     flightZone: {
       polygonColor: "#00ff00",
@@ -226,35 +229,38 @@ export class Renderer {
     ctx.restore()
   }
 
-  drawFlightZone(flightZone: FlightZone, visibleRange: number): void {
+  drawFlightZone(flightZone: FlightZone, visibleRange: number, debug: boolean): void {
     const startX = this.canvasBox.start.x
     const startY = this.canvasBox.start.y
 
     const polygon = flightZone.getPolygon()
     const centroids = flightZone.getCentroids()
 
+    const color = !debug
+      ? this.config.flightZone.polygonColor
+      : this.config.debug.flightZone.polygonColor
+    const backgroundColor = !debug
+      ? color + "03" // ~1% opacity in 255 hex
+      : color + "05" // ~2% opacity in 255 hex
+
     const ctx = this.renderingContext
     ctx.save()
 
-    ctx.lineWidth = 1
     // Draw flight zone polygon
-    ctx.strokeStyle = this.config.debug.flightZone.polygonColor
-    let fillStyle = this.patternCache["flightZoneFillStyle"]
-    if (!fillStyle) {
-      // 17 ~ 10% opacity of 255 in hex
-      fillStyle = HashPatternStyle(this.config.debug.flightZone.polygonColor + "17", 8)
-      this.patternCache["flightZoneFillStyle"] = fillStyle
-    }
-    ctx.fillStyle = fillStyle
-    ctx.setLineDash([4, 6]) // dash, gap
+    ctx.fillStyle = backgroundColor
     ctx.beginPath()
     ctx.moveTo(polygon[0][0] - startX, polygon[0][1] - startY)
     for (let i = 1; i < polygon.length; i++) {
       ctx.lineTo(polygon[i][0] - startX, polygon[i][1] - startY)
     }
     ctx.closePath()
-    ctx.stroke()
     ctx.fill("evenodd")
+    if (!debug) return // Nothing more too draw
+
+    ctx.lineWidth = 1
+    ctx.strokeStyle = color
+    ctx.setLineDash([4, 6]) // dash, gap
+    ctx.stroke()
 
     // Draw centroids
     ctx.strokeStyle = this.config.debug.flightZone.centroidsColor
@@ -317,7 +323,7 @@ export class Renderer {
 
     let fillStyle = this.patternCache["DraftPolygonFillStyle"]
     if (!fillStyle) {
-      // 33 ~ 20% opacity of 255 in hex
+      // 33 ~ 20% opacity in 255 hex
       fillStyle = HashPatternStyle(color + "33", 8)
       this.patternCache["DraftPolygonFillStyle"] = fillStyle
     }
