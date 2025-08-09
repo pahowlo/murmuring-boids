@@ -32,7 +32,7 @@ export class Controller {
   private simulationLoopId?: number = undefined
   private renderingLoopId?: number = undefined
 
-  private activeRenderingTasks: Map<string, renderingTask> = new Map()
+  private renderingTasks: Map<string, renderingTask> = new Map()
 
   constructor(
     window: Window,
@@ -63,7 +63,7 @@ export class Controller {
     }
 
     this.isRunning = true
-    this.simulation.start(Math.floor(maxBoidCount * 0.75), boidConfig)
+    this.simulation.start(Math.floor(maxBoidCount * 0.5), boidConfig)
     this.simulationLoop()
     this.renderingLoop()
   }
@@ -120,9 +120,11 @@ export class Controller {
     // Draw
     this.renderer.clearCanvas()
     // Background
-    if (this.debug) {
-      this.renderer.drawFlightZone(this.flightZone, this.simulation.getConfig().visibleDistance)
-    }
+    this.renderer.drawFlightZone(
+      this.flightZone,
+      this.simulation.getConfig().visibleDistance,
+      this.debug,
+    )
 
     // Forground
     this.simulation.boids.forEach((boid) => {
@@ -142,27 +144,27 @@ export class Controller {
 
   private refreshRenderingTasks(): void {
     const { state, eTag } = this.inputs.polygonDrawer.getState()
-    const prevETag = this.activeRenderingTasks.get("draftPolygon")?.eTag
+    const prevETag = this.renderingTasks.get("draftPolygon")?.eTag
     if (eTag !== prevETag) {
       const polygonOnCanvas = this.inputs.polygonDrawer.getPolygonOnCanvas()
       let endTime: number
       switch (state) {
         case null:
           // Clear, nothing to see here
-          this.activeRenderingTasks.set("draftPolygon", { eTag })
+          this.renderingTasks.set("draftPolygon", { eTag })
           this.flightZone.resetPolygon()
           break
 
         case "drawing":
-          this.activeRenderingTasks.set("draftPolygon", {
+          this.renderingTasks.set("draftPolygon", {
             eTag,
             render: () => this.renderer.drawDraftPolygon(polygonOnCanvas, false),
           })
           break
 
         case "failed":
-          endTime = performance.now() + 2_020
-          this.activeRenderingTasks.set("draftPolygon", {
+          endTime = performance.now() + 2_010
+          this.renderingTasks.set("draftPolygon", {
             eTag,
             endTime,
             render: () =>
@@ -177,8 +179,8 @@ export class Controller {
           break
 
         case "closed":
-          endTime = performance.now() + 5_020
-          this.activeRenderingTasks.set("draftPolygon", {
+          endTime = performance.now() + 4_010
+          this.renderingTasks.set("draftPolygon", {
             eTag,
             endTime,
             render: () =>
@@ -196,11 +198,11 @@ export class Controller {
       }
     }
     // Render active task
-    this.activeRenderingTasks.forEach((task, key) => {
+    this.renderingTasks.forEach((task, key) => {
       if (!task.render) return
       if (task.endTime && performance.now() >= task.endTime) {
         task.endCallback?.()
-        this.activeRenderingTasks.set(key, { eTag: task.eTag })
+        this.renderingTasks.set(key, { eTag: task.eTag })
         return
       }
       task.render()

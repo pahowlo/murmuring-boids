@@ -10,14 +10,13 @@ export const defaultBoidConfig: BoidConfig = {
   maxSpeed: 5,
   maxTurnAngleDeg: 140,
   acceleration: {
-    backToFlightZone: 0.8,
+    backToFlightZone: 0.6,
     stayCloseToCenterOwfMass: 0.1,
-    followCentroids: 0.9,
+    followCentroids: 0.7,
     pullUpTerrain: 1.8,
     cohesion: 0.6,
     alignment: 1.2,
     separation: 1.8,
-    gravity: 0.05, // Positive since (0, 0) is the top left corner
   },
 }
 
@@ -30,7 +29,7 @@ export class Boid {
 
   private config: BoidConfig
 
-  private wasOutside: boolean = false
+  private isOutside: boolean = false
   private backToFlightZone?: {
     direction: vec3
     remainingTicks: number
@@ -78,6 +77,7 @@ export class Boid {
     visibleDistance: number,
     visibleDepth: number,
     randomSeed: number,
+    gravity: vec3,
   ): void {
     let maxTurnAngleDeg = this.config.maxTurnAngleDeg
     let maxSpeed = this.config.maxSpeed
@@ -97,11 +97,12 @@ export class Boid {
     const polygon = flightZone.getPolygon()
 
     if (!this.backToFlightZone) {
-      if (!flightZone.isOutside(this.position)) {
-        this.wasOutside = false
-      } else {
+      const wasOutside = this.isOutside
+      this.isOutside = flightZone.isOutside(this.position)
+      if (this.isOutside) {
         const turnBackDirection = vec3.create()
-        if (!this.wasOutside) {
+
+        if (!wasOutside) {
           // Go the opposite direction
           const closestOrthoDir = closestOrthogonalDirectionToPolygon(polygon, this.position)
           vec3.copy(turnBackDirection, closestOrthoDir)
@@ -110,12 +111,12 @@ export class Boid {
           const randomIdx = Math.floor(randomSeed * polygon.length)
           vec3.subtract(turnBackDirection, polygon[randomIdx], this.position)
         }
+
         vec3.normalize(turnBackDirection, turnBackDirection)
         this.backToFlightZone = {
           direction: turnBackDirection,
           remainingTicks: 30,
         }
-        this.wasOutside = true
       }
     }
     if (this.backToFlightZone) {
@@ -193,7 +194,8 @@ export class Boid {
     // Reset acceleration with truncated self acceleration
     limitTurn(this.acceleration, this.velocity, boidAcceleration, maxTurnAngleDeg)
 
-    this.acceleration[1] += this.config.acceleration.gravity // Apply gravity
+    // Apply gravity
+    vec3.add(this.acceleration, this.acceleration, gravity)
 
     // == Update
     // Update velocity

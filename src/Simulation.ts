@@ -6,6 +6,7 @@ import { Boid } from "./Boid"
 import { FlightZone, Box } from "./FlightZone"
 
 export const defaultSimulationConfig: SimulationConfig = {
+  gravity: 0.05,
   maxDepth: 250,
   visibleDistance: 500,
   visibleDepth: 50,
@@ -30,6 +31,7 @@ export class Simulation {
   boids: Boid[] = []
 
   private spatialGrid: IncrementalSpatialGrid<Boid>
+  private randomSeed: { value: number; remainingTicks: number } = { value: 1, remainingTicks: 0 }
   private isRunning: boolean = false
 
   private nextDisplayId: number = 0
@@ -45,6 +47,14 @@ export class Simulation {
       this.config.grid.cellSize,
       this.maxBoidCount,
     )
+  }
+
+  refreshRandomSeed(): void {
+    this.randomSeed.remainingTicks--
+    if (this.randomSeed.remainingTicks > 0) return
+
+    this.randomSeed.value = Math.random()
+    this.randomSeed.remainingTicks = Math.floor(Math.random() * 121)
   }
 
   getConfig(): Readonly<SimulationConfig> {
@@ -107,7 +117,12 @@ export class Simulation {
     if (!this.isRunning) return
 
     this.spatialGrid.maxItemCount = this.maxBoidCount // Just in case it changed
-    const randomSeed = Math.random()
+    this.refreshRandomSeed()
+
+    const gravityAxis = this.randomSeed.value < 0.5 ? 0 : 1
+    const gravitySign = this.randomSeed.value % 0.5 < 0.25 ? -1 : 1
+    const gravity = vec3.create()
+    gravity[gravityAxis] = gravitySign * this.config.gravity
 
     for (const boid of this.boids) {
       const neighbors = this.spatialGrid.getNeighbors(boid, this.config.grid.neighborDistance)
@@ -125,7 +140,8 @@ export class Simulation {
         maxHeight,
         this.config.visibleDistance,
         this.config.visibleDepth,
-        randomSeed
+        this.randomSeed.value,
+        gravity,
       )
       this.spatialGrid.update(boid)
     }
