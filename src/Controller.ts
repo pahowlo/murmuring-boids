@@ -63,7 +63,7 @@ export class Controller {
     }
 
     this.isRunning = true
-    this.simulation.start(Math.floor(maxBoidCount * 0.5), boidConfig)
+    this.simulation.start(Math.floor(maxBoidCount * 0.7), boidConfig)
     this.simulationLoop()
     this.renderingLoop()
   }
@@ -163,7 +163,7 @@ export class Controller {
           break
 
         case "failed":
-          endTime = performance.now() + 2_010
+          endTime = performance.now() + 1_510
           this.renderingTasks.set("draftPolygon", {
             eTag,
             endTime,
@@ -179,7 +179,7 @@ export class Controller {
           break
 
         case "closed":
-          endTime = performance.now() + 4_010
+          endTime = performance.now() + 3_010
           this.renderingTasks.set("draftPolygon", {
             eTag,
             endTime,

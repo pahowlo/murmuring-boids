@@ -16,7 +16,7 @@ export const defaultRendererConfig: RendererConfig = {
   },
   debug: {
     flightZone: {
-      polygonColor: "#00ff00",
+      polygonColor: "#888888",
       centroidsColor: "#0000ff",
     },
     centerOwMassColor: "#ffff00", // yellow
@@ -230,6 +230,8 @@ export class Renderer {
   }
 
   drawFlightZone(flightZone: FlightZone, visibleRange: number, debug: boolean): void {
+    if (!debug) return // Nothing more too draw for now
+
     const startX = this.canvasBox.start.x
     const startY = this.canvasBox.start.y
 
@@ -239,9 +241,7 @@ export class Renderer {
     const color = !debug
       ? this.config.flightZone.polygonColor
       : this.config.debug.flightZone.polygonColor
-    const backgroundColor = !debug
-      ? color + "03" // ~1% opacity in 255 hex
-      : color + "05" // ~2% opacity in 255 hex
+    const backgroundColor = color + "0d" // ~5% opacity in 255 hex
 
     const ctx = this.renderingContext
     ctx.save()
@@ -255,12 +255,9 @@ export class Renderer {
     }
     ctx.closePath()
     ctx.fill("evenodd")
-    if (!debug) return // Nothing more too draw
 
-    ctx.lineWidth = 1
-    ctx.strokeStyle = color
-    ctx.setLineDash([4, 6]) // dash, gap
-    ctx.stroke()
+    ctx.restore()
+    ctx.save()
 
     // Draw centroids
     ctx.strokeStyle = this.config.debug.flightZone.centroidsColor
@@ -377,7 +374,7 @@ export class Renderer {
     ctx.save()
 
     ctx.lineWidth = this.config.boids.lineWidth
-    ctx.strokeStyle = `hsl(10, 10%, ${90 * depthRatio + 10}%)`
+    ctx.strokeStyle = `hsl(10, 10%, ${60 * depthRatio + 30}%)`
 
     ctx.translate(pos[0] - startX, pos[1] - startY)
     ctx.rotate(Math.atan2(vel[1], vel[0]))

@@ -10,12 +10,12 @@ export const defaultBoidConfig: BoidConfig = {
   maxSpeed: 5,
   maxTurnAngleDeg: 140,
   acceleration: {
-    backToFlightZone: 0.6,
+    backToFlightZone: 1.2,
     stayCloseToCenterOwfMass: 0.1,
-    followCentroids: 0.7,
+    followCentroids: 1.6,
     pullUpTerrain: 1.8,
-    cohesion: 0.6,
-    alignment: 1.2,
+    cohesion: 0.4,
+    alignment: 1,
     separation: 1.8,
   },
 }
@@ -29,6 +29,7 @@ export class Boid {
 
   private config: BoidConfig
 
+  private lastPositionInside?: vec3
   private isOutside: boolean = false
   private backToFlightZone?: {
     direction: vec3
@@ -99,7 +100,9 @@ export class Boid {
     if (!this.backToFlightZone) {
       const wasOutside = this.isOutside
       this.isOutside = flightZone.isOutside(this.position)
-      if (this.isOutside) {
+      if (!this.isOutside) {
+        this.lastPositionInside = vec3.clone(this.position)
+      } else {
         const turnBackDirection = vec3.create()
 
         if (!wasOutside) {
@@ -107,15 +110,22 @@ export class Boid {
           const closestOrthoDir = closestOrthogonalDirectionToPolygon(polygon, this.position)
           vec3.copy(turnBackDirection, closestOrthoDir)
         } else {
-          // Use randomSeed to select a polygon vertex to turn back towards
-          const randomIdx = Math.floor(randomSeed * polygon.length)
-          vec3.subtract(turnBackDirection, polygon[randomIdx], this.position)
+          // Check if last known inside position is still a good option
+          if (this.lastPositionInside && flightZone.isOutside(this.lastPositionInside)) {
+            this.lastPositionInside = undefined // No way back
+          }
+          vec3.subtract(
+            turnBackDirection,
+            // Fallback: aim for random polygon vertex
+            this.lastPositionInside ?? polygon[Math.floor(randomSeed * polygon.length)],
+            this.position,
+          )
         }
 
         vec3.normalize(turnBackDirection, turnBackDirection)
         this.backToFlightZone = {
           direction: turnBackDirection,
-          remainingTicks: 30,
+          remainingTicks: 10,
         }
       }
     }
@@ -195,7 +205,9 @@ export class Boid {
     limitTurn(this.acceleration, this.velocity, boidAcceleration, maxTurnAngleDeg)
 
     // Apply gravity
-    vec3.add(this.acceleration, this.acceleration, gravity)
+    if (!this.isOutside) {
+      vec3.add(this.acceleration, this.acceleration, gravity)
+    }
 
     // == Update
     // Update velocity
