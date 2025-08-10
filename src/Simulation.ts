@@ -8,8 +8,8 @@ import { FlightZone, Box } from "./FlightZone"
 export const defaultSimulationConfig: SimulationConfig = {
   gravity: 0.05,
   maxDepth: 250,
-  visibleDistance: 500,
-  visibleDepth: 50,
+  visibleDistance: 100,
+  visibleDepth: 30,
   grid: {
     cellSize: { x: 10, y: 10 },
     neighborDistance: { min: 1, max: 6, limitCount: 30 },

@@ -3,8 +3,14 @@ import { vec2, vec3 } from "gl-matrix"
 /**
  * Return new polygon after removing duplicate points and collinear segments,
  * or undefined if it was found valid during the process.
+ *
+ * @param polygon List of ordered vertices defining the polygon edges
+ * @param minDistance Minimum distance between two vertices of an edge to consider them as distinct
  */
-export function validatePolygon<T extends vec2 | vec3>(polygon: T[]): T[] | undefined {
+export function validatePolygon<T extends vec2 | vec3>(
+  polygon: T[],
+  minDistance: number = 10,
+): T[] | undefined {
   const n = polygon.length
   if (n < 3) {
     return undefined // Not a valid polygon
@@ -18,8 +24,10 @@ export function validatePolygon<T extends vec2 | vec3>(polygon: T[]): T[] | unde
 
     const point = polygon[idx]
     const nextPoint = polygon[nextIdx]
-    // Check if duplicate point
-    if (point[0] === nextPoint[0] && point[1] === nextPoint[1]) {
+    // Check if duplicated point
+    const manDist = Math.abs(point[0] - nextPoint[0]) + Math.abs(point[1] - nextPoint[1])
+    // Max manhattan distance on circle is: radius * sqrt(2) ~ 1.414 (45 degrees angle)
+    if (manDist <= minDistance * 1.414) {
       continue // Skip
     }
     // Skip if collinear segment
