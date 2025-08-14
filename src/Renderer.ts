@@ -24,26 +24,6 @@ export const defaultRendererConfig: RendererConfig = {
   },
 }
 
-function setupBoidPath(): Path2D {
-  const boidPath = new Path2D()
-  const size = 1
-  // Wing triangle
-  boidPath.moveTo(-size * 0.5, size * 0.3)
-  boidPath.lineTo(size, 0) // Nose
-  boidPath.lineTo(-size * 0.5, -size * 0.3)
-
-  // Bottom
-  boidPath.moveTo(-size * 0.5, size * 0.3)
-  boidPath.lineTo(-size * 0.5, -size * 0.3)
-  //boidPath.closePath() // Left wing
-
-  // Fold (center line)
-  boidPath.moveTo(size, 0) // Nose
-  boidPath.lineTo(-size * 0.5, 0)
-
-  return boidPath
-}
-
 // Main class
 export class Renderer {
   private window: Window
@@ -57,8 +37,6 @@ export class Renderer {
   maxHeight: number
   private devicePixelRatio: number
   private screenHasTopLeft: boolean = false
-
-  private boidPath: Path2D = setupBoidPath()
 
   private patternCache: { [name: string]: CanvasPattern } = {}
 
@@ -376,10 +354,24 @@ export class Renderer {
     ctx.lineWidth = this.config.boids.lineWidth
     ctx.strokeStyle = `hsl(10, 10%, ${60 * depthRatio + 30}%)`
 
+    ctx.beginPath()
     ctx.translate(pos[0] - startX, pos[1] - startY)
     ctx.rotate(Math.atan2(vel[1], vel[0]))
     ctx.scale(boidSize, boidSize)
-    ctx.stroke(this.boidPath)
+
+    const size = 1 // scaled by boidSize
+    ctx.moveTo(-size * 0.5, size * 0.3)
+    ctx.lineTo(size, 0) // Nose
+    ctx.lineTo(-size * 0.5, -size * 0.3)
+
+    // Bottom
+    ctx.moveTo(-size * 0.5, size * 0.3)
+    ctx.lineTo(-size * 0.5, -size * 0.3) // Left wing
+
+    // // Fold (center line)
+    // boidPath.moveTo(size, 0) // Nose
+    // boidPath.lineTo(-size * 0.5, 0)}
+    ctx.stroke()
 
     ctx.restore()
   }

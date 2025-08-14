@@ -35,7 +35,7 @@ export class FlightZone {
   private polygon: vec3[]
   private centroids: vec3[]
 
-  constructor(canvasBox: Box, maxDepth: number, paddingRatio: number = 0.2) {
+  constructor(canvasBox: Box, maxDepth: number, paddingRatio: number = 0.15) {
     this.canvasBox = canvasBox
     this.paddingRatio = paddingRatio
     this.maxDepth = maxDepth

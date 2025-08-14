@@ -52,15 +52,13 @@ export class PolygonDrawer {
   }
 
   private setupListeners(canvas: HTMLCanvasElement): void {
-    let clickTimeoutId: number = 0
+    let clickInProgress: boolean = false
 
     canvas.addEventListener("click", (e) => {
-      if (clickTimeoutId) return // Prevent click spamming
+      if (clickInProgress) return // Prevent click spamming
 
-      const dblclickThreshold = this.polygonOnCanvas.length > 0 ? 200 : 0
-
-      clickTimeoutId = setTimeout(() => {
-        clickTimeoutId = 0 // reset
+      clickInProgress = true
+      try {
         const canvasPt = vec2.fromValues(e.clientX, e.clientY)
 
         switch (this.state) {
@@ -87,14 +85,12 @@ export class PolygonDrawer {
           default:
             throw new Error(`Unexpected polygon state: ${this.state}`)
         }
-      }, dblclickThreshold)
+      } finally {
+        clickInProgress = false
+      }
     })
 
     canvas.addEventListener("dblclick", () => {
-      if (clickTimeoutId) {
-        clearTimeout(clickTimeoutId)
-        clickTimeoutId = 0
-      }
       switch (this.state) {
         case null:
           // Nothing to do
