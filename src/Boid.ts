@@ -238,7 +238,7 @@ export class Boid {
     const alignment = vec3.create()
     for (const neighbor of neighbors) {
       const zDiff = Math.abs(neighbor.getPosition()[2] - this.position[2])
-      if (zDiff > visibleDepth * 2) {
+      if (zDiff > visibleDepth) {
         // Ignore neighbors that are too far along z-axis
         continue
       }
@@ -277,12 +277,12 @@ export class Boid {
     const separation = vec3.create()
     for (const neighbor of closeNeighbors) {
       const separationDir = vec3.subtract(vec3.create(), this.position, neighbor.getPosition())
-      if (Math.abs(separationDir[2]) > visibleDepth * 2) {
+      if (Math.abs(separationDir[2]) > visibleDepth) {
         // Ignore close neighbors that are too far along z-axis
         continue
       }
       let dist = vec3.length(separationDir)
-      if (dist === 0) {
+      if (dist <= 1e-6) {
         dist = 10
         vec3.random(separationDir, dist)
       }

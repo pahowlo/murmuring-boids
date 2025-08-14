@@ -1,5 +1,5 @@
+# == Common
 # System
-.DS_Store
 .DS_Store
 .DS_Store?
 .idea/
@@ -17,15 +17,6 @@ Thumbs.db
 *.temp
 *.tmp
 logs/
-
-# Javascript/Typescripts
-.npm
-npm-debug.log*
-node_modules/
-package-lock.json
-pnpm-lock.yaml
-# Use .test.ts for test files instead of spec
-*.spec.ts
 
 # Build files
 .eggs/
@@ -48,3 +39,13 @@ target/
 # Github links
 *.link
 *.link/
+
+# == Project's
+# Javascript/Typescripts
+.npm
+npm-debug.log*
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+# Use .test.ts for test files instead of spec
+*.spec.ts
