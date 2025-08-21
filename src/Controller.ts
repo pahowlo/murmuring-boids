@@ -1,7 +1,7 @@
 import type { BoidConfig, RendererConfig } from "./config"
 import { FreqEstimator } from "./utilities/freqEstimator"
 import { MouseStatus } from "./inputs/MouseStatus"
-import { PolygonDrawer } from "./inputs/PolygonDrawer"
+import { PolygonDrawer, PolygonState } from "./inputs/PolygonDrawer"
 import { FlightZone } from "./FlightZone"
 import { Renderer } from "./Renderer"
 import { Simulation } from "./Simulation"
@@ -149,20 +149,20 @@ export class Controller {
       const polygonOnCanvas = this.inputs.polygonDrawer.getPolygonOnCanvas()
       let endTime: number
       switch (state) {
-        case null:
+        case PolygonState.NONE:
           // Clear, nothing to see here
           this.renderingTasks.set("draftPolygon", { eTag })
           this.flightZone.resetPolygon()
           break
 
-        case "drawing":
+        case PolygonState.DRAWING:
           this.renderingTasks.set("draftPolygon", {
             eTag,
             render: () => this.renderer.drawDraftPolygon(polygonOnCanvas, false),
           })
           break
 
-        case "failed":
+        case PolygonState.FAILED:
           endTime = performance.now() + 1_510
           this.renderingTasks.set("draftPolygon", {
             eTag,
@@ -178,7 +178,7 @@ export class Controller {
           })
           break
 
-        case "closed":
+        case PolygonState.CLOSED:
           endTime = performance.now() + 3_010
           this.renderingTasks.set("draftPolygon", {
             eTag,
