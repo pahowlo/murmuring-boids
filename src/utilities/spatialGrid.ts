@@ -23,7 +23,7 @@ export class IncrementalSpatialGrid<T extends Item> {
     this.centerOwMassAlpha = 2 / (maxItemCount + 1)
   }
 
-  set maxItemCount(value: number) {
+  setMaxItemCount(value: number): void {
     this.centerOwMassAlpha = 2 / (value + 1)
   }
 

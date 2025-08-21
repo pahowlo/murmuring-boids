@@ -7,12 +7,12 @@ import { FlightZone } from "./FlightZone"
 
 export const defaultBoidConfig: BoidConfig = {
   minSpeed: 1,
-  maxSpeed: 5,
+  maxSpeed: 4,
   maxTurnAngleDeg: 140,
   acceleration: {
     backToFlightZone: 1.2,
     stayCloseToCenterOwfMass: 0.1,
-    followCentroids: 1.6,
+    followCentroids: -2,
     pullUpTerrain: 1.8,
     cohesion: 0.4,
     alignment: 1,
@@ -149,6 +149,7 @@ export class Boid {
       const followDirection = vec3.create()
       for (const point of centroids) {
         const vec = vec3.subtract(vec3.create(), point, this.position)
+        vec[2] = 0 // Ignore in the case of centroids
         const manDist = Math.abs(vec[0]) + Math.abs(vec[1])
         if (manDist >= visibleDistance) {
           continue // Not visible

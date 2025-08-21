@@ -3,7 +3,7 @@ import { vec2 } from "gl-matrix"
 import { validatePolygon } from "../utilities/polygon"
 
 export const PolygonState = {
-  NULL: null,
+  NONE: "none",
   FAILED: "failed",
   DRAWING: "drawing",
   CLOSED: "closed",
@@ -14,22 +14,25 @@ export class PolygonDrawer {
   private canvas: HTMLCanvasElement
   readonly CLOSING_RADIUS = 10 // CSS pixels
 
-  private polygonOnCanvas: vec2[] = []
-  private _state: PolygonState = null
-  private _eTag: number = 0 // Incremented on every change
+  private polygonOnCanvas: vec2[]
+  private _state: PolygonState
+  private _eTag: number // Incremented on every change
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
     // Make canvas focusable
     this.canvas.tabIndex = 0
+
+    this.polygonOnCanvas = []
+    this._state = "none"
+    this._eTag = 0
     this.setupListeners(canvas)
   }
 
-  private get state(): PolygonState {
+  private getState(): PolygonState {
     return this._state
   }
-  private set state(newState: PolygonState) {
-    this._state = newState
+  private updateState(newState: PolygonState): void {
     this._eTag++
     switch (newState) {
       case "closed": {
@@ -38,14 +41,15 @@ export class PolygonDrawer {
           this.polygonOnCanvas = validatedPolygon
           return
         }
-        this._state = "failed"
+        newState = "failed"
         break
       }
     }
+    this._state = newState
   }
 
-  getState(): { state: PolygonState; eTag: number } {
-    return { state: this.state, eTag: this._eTag }
+  getStateInfo(): { state: PolygonState; eTag: number } {
+    return { state: this._state, eTag: this._eTag }
   }
   getPolygonOnCanvas(): vec2[] {
     return this.polygonOnCanvas
@@ -61,13 +65,14 @@ export class PolygonDrawer {
       try {
         const canvasPt = vec2.fromValues(e.clientX, e.clientY)
 
-        switch (this.state) {
-          case null:
+        const state = this.getState()
+        switch (state) {
+          case "none":
           case "failed":
           case "closed": {
             // Start a new polygon
             this.polygonOnCanvas = [canvasPt]
-            this.state = "drawing"
+            this.updateState("drawing")
             break
           }
           case "drawing": {
@@ -75,7 +80,7 @@ export class PolygonDrawer {
             const manDist = Math.abs(canvasPt[0] - start[0]) + Math.abs(canvasPt[1] - start[1])
             if (manDist <= this.CLOSING_RADIUS) {
               // Close polygon since we clicked near the starting point
-              this.state = "closed"
+              this.updateState("closed")
               break
             }
             // Add point to polygon
@@ -83,7 +88,7 @@ export class PolygonDrawer {
             break
           }
           default:
-            throw new Error(`Unexpected polygon state: ${this.state}`)
+            throw new Error(`Unexpected polygon state: ${state}`)
         }
       } finally {
         clickInProgress = false
@@ -91,8 +96,9 @@ export class PolygonDrawer {
     })
 
     canvas.addEventListener("dblclick", () => {
-      switch (this.state) {
-        case null:
+      const state = this.getState()
+      switch (state) {
+        case "none":
           // Nothing to do
           break
 
@@ -100,16 +106,16 @@ export class PolygonDrawer {
         case "closed":
           // Erase polygon
           this.polygonOnCanvas = []
-          this.state = null
+          this.updateState("none")
           break
 
         case "drawing":
           // Close polygon
-          this.state = "closed"
+          this.updateState("closed")
           break
 
         default:
-          throw new Error(`Unexpected polygon state: ${this.state}`)
+          throw new Error(`Unexpected polygon state: ${state}`)
       }
     })
   }

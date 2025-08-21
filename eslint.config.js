@@ -23,6 +23,23 @@ export default [
       "no-console": "warn",
     },
   },
+  // Prevent using getters and setters
+  {
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "MethodDefinition[kind='get']",
+          message:
+            "Do not use getters or setters. Use functions instead to make side effect(s) explicit.",
+        },
+        {
+          selector: "MethodDefinition[kind='set']",
+          message: "Do not use getters or setters. Use functions instead to make side effect(s) explicit.",
+        },
+      ],
+    },
+  },
   // Prevent .spec.ts files - use .test.ts only
   {
     files: ["**/*.spec.ts"],
