@@ -34,18 +34,18 @@ export class PolygonDrawer {
   }
   private updateState(newState: PolygonState): void {
     this._eTag++
+    this._state = newState
     switch (newState) {
-      case "closed": {
+      case PolygonState.NONE: {
         const validatedPolygon = validatePolygon(this.polygonOnCanvas)
         if (validatedPolygon) {
           this.polygonOnCanvas = validatedPolygon
           return
         }
-        newState = "failed"
+        this._state = "failed"
         break
       }
     }
-    this._state = newState
   }
 
   getStateInfo(): { state: PolygonState; eTag: number } {
@@ -67,15 +67,16 @@ export class PolygonDrawer {
 
         const state = this.getState()
         switch (state) {
-          case "none":
-          case "failed":
-          case "closed": {
+          case PolygonState.NONE:
+          case PolygonState.FAILED:
+          case PolygonState.CLOSED: {
             // Start a new polygon
             this.polygonOnCanvas = [canvasPt]
             this.updateState("drawing")
             break
           }
-          case "drawing": {
+
+          case PolygonState.DRAWING: {
             const start = this.polygonOnCanvas[0]
             const manDist = Math.abs(canvasPt[0] - start[0]) + Math.abs(canvasPt[1] - start[1])
             if (manDist <= this.CLOSING_RADIUS) {
@@ -87,6 +88,7 @@ export class PolygonDrawer {
             this.polygonOnCanvas.push(canvasPt)
             break
           }
+
           default:
             throw new Error(`Unexpected polygon state: ${state}`)
         }
@@ -98,18 +100,18 @@ export class PolygonDrawer {
     canvas.addEventListener("dblclick", () => {
       const state = this.getState()
       switch (state) {
-        case "none":
+        case PolygonState.NONE:
           // Nothing to do
           break
 
-        case "failed":
-        case "closed":
+        case PolygonState.FAILED:
+        case PolygonState.CLOSED:
           // Erase polygon
           this.polygonOnCanvas = []
           this.updateState("none")
           break
 
-        case "drawing":
+        case PolygonState.DRAWING:
           // Close polygon
           this.updateState("closed")
           break
