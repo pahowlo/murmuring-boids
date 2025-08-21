@@ -267,6 +267,8 @@ export class Renderer {
     remainingTime?: number,
     blinkingFactor: number = 1,
   ): void {
+    if (polygonOnCanvas.length === 0) return
+
     const startX = 0 // No offset since polygon was drawn on canvas
     const startY = 0
 
@@ -323,7 +325,7 @@ export class Renderer {
     ctx.setLineDash([]) // Solid line
     ctx.beginPath()
     ctx.moveTo(x, y)
-    for (let i = 0; i < polygonOnCanvas.length; i++) {
+    for (let i = 1; i < polygonOnCanvas.length; i++) {
       x = polygonOnCanvas[i][0] - startX
       y = polygonOnCanvas[i][1] - startY
       // Draw line to next point

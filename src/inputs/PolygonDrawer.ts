@@ -36,6 +36,7 @@ export class PolygonDrawer {
     this._eTag++
     this._state = newState
     switch (newState) {
+      case PolygonState.CLOSED:
       case PolygonState.NONE: {
         const validatedPolygon = validatePolygon(this.polygonOnCanvas)
         if (validatedPolygon) {
