@@ -9,7 +9,7 @@ export const defaultSimulationConfig: SimulationConfig = {
   gravity: 0.05,
   maxDepth: 250,
   visibleDistance: 100,
-  visibleDepth: 60,
+  visibleDepth: 30,
   grid: {
     cellSize: { x: 10, y: 10 },
     neighborDistance: { min: 1, max: 6, limitCount: 30 },
@@ -116,7 +116,7 @@ export class Simulation {
   update(flightZone: FlightZone, maxHeight: number): void {
     if (!this.isRunning) return
 
-    this.spatialGrid.maxItemCount = this.maxBoidCount // Just in case it changed
+    this.spatialGrid.setMaxItemCount(this.maxBoidCount)
     this.refreshRandomSeed()
 
     const gravityAxis = this.randomSeed.value < 0.5 ? 0 : 1

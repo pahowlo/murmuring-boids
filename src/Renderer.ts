@@ -9,7 +9,7 @@ export const defaultRendererConfig: RendererConfig = {
   clearCanvasIfResized: true,
   boids: {
     lineWidth: 0.1,
-    size: 3,
+    sizeScreenHeightRatio: 0.003,
   },
   flightZone: {
     polygonColor: "#888888",
@@ -346,13 +346,14 @@ export class Renderer {
 
     const depthRatio = 1.2 - Math.max(0.2, Math.min(1.2, pos[2] / maxDepth))
 
-    const boidSize = this.config.boids.size + depthRatio * 2 - 1
+    const boidSize =
+      this.config.boids.sizeScreenHeightRatio * this.screenBox.height + depthRatio * 2 - 1
 
     const ctx = this.renderingContext
     ctx.save()
 
     ctx.lineWidth = this.config.boids.lineWidth
-    ctx.strokeStyle = `hsl(10, 10%, ${60 * depthRatio + 30}%)`
+    ctx.strokeStyle = `hsl(10, 10%, ${80 * depthRatio + 20}%)`
 
     ctx.beginPath()
     ctx.translate(pos[0] - startX, pos[1] - startY)

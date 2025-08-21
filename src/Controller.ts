@@ -143,7 +143,7 @@ export class Controller {
   }
 
   private refreshRenderingTasks(): void {
-    const { state, eTag } = this.inputs.polygonDrawer.getState()
+    const { state, eTag } = this.inputs.polygonDrawer.getStateInfo()
     const prevETag = this.renderingTasks.get("draftPolygon")?.eTag
     if (eTag !== prevETag) {
       const polygonOnCanvas = this.inputs.polygonDrawer.getPolygonOnCanvas()

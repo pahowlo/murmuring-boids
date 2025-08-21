@@ -17,7 +17,7 @@ export interface RendererConfig {
   clearCanvasIfResized: boolean
   boids: {
     lineWidth: number
-    size: number
+    sizeScreenHeightRatio: number
   }
   flightZone: { polygonColor: string }
   debug: {
