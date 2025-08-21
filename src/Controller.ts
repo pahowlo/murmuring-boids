@@ -1,7 +1,6 @@
 import type { BoidConfig, RendererConfig } from "./config"
 import { FreqEstimator } from "./utilities/freqEstimator"
 import { MouseStatus } from "./inputs/MouseStatus"
-import { PolygonDrawer, PolygonState } from "./inputs/PolygonDrawer"
 import { FlightZone } from "./FlightZone"
 import { Renderer } from "./Renderer"
 import { Simulation } from "./Simulation"
@@ -19,7 +18,6 @@ export class Controller {
   private simulation: Simulation
   private inputs: {
     mouseStatus: MouseStatus
-    polygonDrawer: PolygonDrawer
   }
 
   readonly TARGET_TPS = 30
@@ -44,7 +42,6 @@ export class Controller {
     this.flightZone = new FlightZone(this.renderer.canvasBox, this.simulation.getConfig().maxDepth)
     this.inputs = {
       mouseStatus: new MouseStatus(canvas),
-      polygonDrawer: new PolygonDrawer(canvas),
     }
 
     this.TARGET_TICK_TIME = 1000 / this.TARGET_TPS
@@ -143,63 +140,6 @@ export class Controller {
   }
 
   private refreshRenderingTasks(): void {
-    const prevETag = this.renderingTasks.get("draftPolygon")?.eTag
-    
-    const { state, eTag } = this.inputs.polygonDrawer.getStateInfo()
-    console.log(state, eTag)
-    if (eTag !== prevETag) {
-      const polygonOnCanvas = this.inputs.polygonDrawer.getPolygonOnCanvas()
-      console.log(polygonOnCanvas)
-      let endTime: number
-      switch (state) {
-        case PolygonState.NONE:
-          // Clear, nothing to see here
-          this.renderingTasks.set("draftPolygon", { eTag })
-          this.flightZone.resetPolygon()
-          break
-
-        case PolygonState.DRAWING:
-          this.renderingTasks.set("draftPolygon", {
-            eTag,
-            render: () => this.renderer.drawDraftPolygon(polygonOnCanvas, false),
-          })
-          break
-
-        case PolygonState.FAILED:
-          endTime = performance.now() + 1_510
-          this.renderingTasks.set("draftPolygon", {
-            eTag,
-            endTime,
-            render: () =>
-              this.renderer.drawDraftPolygon(
-                polygonOnCanvas,
-                false,
-                "#ff0000",
-                endTime - performance.now(),
-                3, // Blinking factor
-              ),
-          })
-          break
-
-        case PolygonState.CLOSED:
-          endTime = performance.now() + 3_010
-          this.renderingTasks.set("draftPolygon", {
-            eTag,
-            endTime,
-            render: () =>
-              this.renderer.drawDraftPolygon(
-                polygonOnCanvas,
-                true,
-                undefined,
-                endTime - performance.now(),
-              ),
-            endCallback: () => {
-              this.flightZone.setPolygon(polygonOnCanvas)
-            },
-          })
-          break
-      }
-    }
     // Render active task
     this.renderingTasks.forEach((task, key) => {
       if (!task.render) return
