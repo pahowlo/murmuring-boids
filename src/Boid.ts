@@ -10,7 +10,7 @@ export const defaultBoidConfig: BoidConfig = {
   maxSpeed: 4,
   maxTurnAngleDeg: 140,
   acceleration: {
-    backToFlightZone: 1.2,
+    backToFlightZone: 0.6,
     stayCloseToCenterOwfMass: 0.1,
     followCentroids: -2,
     pullUpTerrain: 1.8,
