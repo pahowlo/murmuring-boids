@@ -1,49 +1,64 @@
-#!/bin/sh
-if ( return 0 2>/dev/null ); then
-    echo "[ERROR] This script must be run, not sourced." >&2
-    return 1
-fi
+#!/usr/bin/env python3.13
 
-SCRIPTS_DIR=$(dirname "$(realpath "$0")")
-ROOT_DIR=$(realpath "$SCRIPTS_DIR/..")
+import json
+import shutil
+import sys
+from pathlib import Path
 
-# Imports
-. "$SCRIPTS_DIR/common/utils.sh"
+SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
 
+ROOT_DIR = SCRIPTS_DIR.parent
 
-function build_target()
-{
-    more_recent_version jq 1.6
-
-    cd $ROOT_DIR
-    rm -rf target
-
-    # Compile ts sources
-    tsc --outDir target/dist
-
-    # Include minimal package.json
-    jq '{
-            name,
-            version,
-            description,
-            author,
-            license,
-            main,
-            exports,
-            types,
-            dependencies,
-        } +
-        (if has("packageManager") then {packageManager}    else {} end) +
-        (if has("repository")     then {repository}    else {} end) +
-        (if has("publishConfig")  then {publishConfig} else {} end) +
-        (if has("keywords")       then {keywords}      else {} end)
-    ' package.json > target/package.json
-
-    sed -i 's~src/~dist/~g' target/package.json
-
-    cd - >/dev/null
-}
+from includes.utils.subprocess import run_cmd  # noqa: E402
 
 
+def build_target() -> None:
+    # Remove target directory (if it exists) for a clean build
+    target_dir = ROOT_DIR / "target"
+    if target_dir.exists():
+        if target_dir.is_file():
+            target_dir.unlink()
+        else:
+            shutil.rmtree(target_dir)
 
-build_target "$@"
+    process = run_cmd(f"pnpm tsc --outDir {str(target_dir / 'dist')!r}")
+    if not process.successful():
+        exit(1)
+
+    with open(ROOT_DIR / "package.json", "r") as f:
+        package_json = json.load(f)
+
+    build_package_json = {
+        k: package_json[k]
+        for k in [
+            "name",
+            "version",
+            "description",
+            "author",
+            "license",
+            "main",
+            "exports",
+            "dependencies",
+        ]
+    }
+    for opt_k in [
+        "types",
+        "packageManager",
+        "repository",
+        "publishConfig",
+        "keywords",
+    ]:
+        if opt_k in package_json:
+            build_package_json[opt_k] = package_json[opt_k]
+
+    build_package_json_str = json.dumps(build_package_json, indent=2)
+    build_package_json_str.replace("src/", "dist/")
+
+    with open(target_dir / "package.json", "w") as f:
+        f.write(build_package_json_str)
+
+
+if __name__ == "__main__":
+    build_target()
