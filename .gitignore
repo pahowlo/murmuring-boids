@@ -46,6 +46,6 @@ target/
 npm-debug.log*
 node_modules/
 package-lock.json
-pnpm-lock.yaml
+pnpm-lock.y*
 # Use .test.ts for test files instead of spec
 *.spec.ts
