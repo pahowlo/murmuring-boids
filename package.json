@@ -1,6 +1,6 @@
 {
   "name": "murmuring-boids",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "author": "pahowlo <paul.legoux@gmail.com>",
   "description": "A JS component for rendering an interactive murmuring boids animation.",
   "type": "module",
@@ -15,7 +15,8 @@
     "clean": "rm -rf node_modules/ dist/ target/ pnpm-lock.yaml package-lock.json",
     "demo": "vite",
     "format": "prettier --config package.json --write 'src/**/*.{js,ts,json}'",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "prettier": {
     "printWidth": 100,
@@ -25,6 +26,7 @@
   "devDependencies": {
     "prettier": "^3.6.2",
     "typescript": "^5.9.2",
-    "vite": "^7.0.6"
+    "vite": "^7.0.6",
+    "vitest": "^3.2.4"
   }
 }

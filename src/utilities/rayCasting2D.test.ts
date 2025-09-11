@@ -1,5 +1,6 @@
 import { vec2 } from "gl-matrix"
 import { isInPolygon } from "./rayCasting2D"
+import { describe, test, expect } from "vitest"
 
 import { scenarios } from "./__tests___/scenarios"
 
