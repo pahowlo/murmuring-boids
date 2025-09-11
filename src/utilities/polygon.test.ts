@@ -1,5 +1,6 @@
 import { vec2 } from "gl-matrix"
 import { validatePolygon } from "./polygon"
+import { describe, test, expect } from "vitest"
 
 import { scenarios } from "./__tests___/scenarios"
 
