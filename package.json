@@ -11,7 +11,7 @@
     "gl-matrix": "^3.4.3"
   },
   "scripts": {
-    "build": "./.scripts/build",
+    "build": "./.scripts/build.py",
     "clean": "rm -rf node_modules/ dist/ target/ pnpm-lock.yaml package-lock.json",
     "demo": "vite",
     "format": "prettier --config package.json --write 'src/**/*.{js,ts,json}'",
