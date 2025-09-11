@@ -14,7 +14,7 @@ ROOT_DIR = SCRIPTS_DIR.parent
 from includes.utils.subprocess import run_cmd  # noqa: E402
 
 
-def build_target() -> None:
+def build() -> None:
     # Remove target directory (if it exists) for a clean build
     target_dir = ROOT_DIR / "target"
     if target_dir.exists():
@@ -61,4 +61,4 @@ def build_target() -> None:
 
 
 if __name__ == "__main__":
-    build_target()
+    build()
