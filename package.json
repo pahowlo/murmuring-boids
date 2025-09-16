@@ -6,7 +6,7 @@
   "type": "module",
   "main": "./src/main.ts",
   "exports": "./src/main.ts",
-  "packageManager": "pnpm@10.14.0",
+  "packageManager": "pnpm@10.15.1",
   "dependencies": {
     "gl-matrix": "^3.4.3"
   },
