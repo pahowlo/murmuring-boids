@@ -5,16 +5,16 @@ import shutil
 import sys
 from pathlib import Path
 
-SCRIPTS_DIR = Path(__file__).resolve().parent
-if str(SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS_DIR))
-
-ROOT_DIR = SCRIPTS_DIR.parent
-
+# When running a Python script, parent directory is added to sys.path
 from includes.utils.subprocess import run_cmd  # noqa: E402
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
 
 
 def build() -> None:
+    print(f"ROOT_DIR    = {ROOT_DIR}")
+    print()
+
     # Remove target directory (if it exists) for a clean build
     target_dir = ROOT_DIR / "target"
     if target_dir.exists():
@@ -23,9 +23,9 @@ def build() -> None:
         else:
             shutil.rmtree(target_dir)
 
-    process = run_cmd(f"pnpm tsc --outDir {str(target_dir / 'dist')!r}")
-    if not process.successful():
-        exit(1)
+    exit_code, _, _ = run_cmd(f"pnpm tsc --outDir {str(target_dir / 'dist')!r}")
+    if exit_code != 0:
+        exit(exit_code)
 
     with open(ROOT_DIR / "package.json", "r") as f:
         package_json = json.load(f)
@@ -37,13 +37,14 @@ def build() -> None:
             "version",
             "description",
             "author",
-            "license",
             "main",
             "exports",
             "dependencies",
         ]
     }
+    # Optional fields
     for opt_k in [
+        "license",
         "types",
         "packageManager",
         "repository",
@@ -58,6 +59,10 @@ def build() -> None:
 
     with open(target_dir / "package.json", "w") as f:
         f.write(build_package_json_str)
+
+    print("Build completed successfully.")
+
+
 
 
 if __name__ == "__main__":

@@ -53,3 +53,10 @@ package-lock.json
 pnpm-lock.y*
 # Use .test.ts for test files instead of spec
 *.spec.ts
+
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+__main__.pyc
