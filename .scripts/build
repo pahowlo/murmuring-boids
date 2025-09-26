@@ -63,7 +63,4 @@ def build() -> None:
     print("Build completed successfully.")
 
 
-
-
-if __name__ == "__main__":
-    build()
+build()
