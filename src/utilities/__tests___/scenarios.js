@@ -1,4 +1,4 @@
-const scenarios = [
+export const scenarios = [
   // Triangle
   {
     polygon: [
@@ -212,7 +212,3 @@ const scenarios = [
     ],
   },
 ]
-
-/* eslint-disable no-undef */
-module.exports = { scenarios }
-/* eslint-enable no-undef */
