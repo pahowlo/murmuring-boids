@@ -1,22 +1,21 @@
 {
   "name": "murmuring-boids",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "author": "pahowlo <paul.legoux@gmail.com>",
   "description": "A JS component for rendering an interactive murmuring boids animation.",
   "type": "module",
   "main": "./src/main.ts",
   "exports": "./src/main.ts",
-  "packageManager": "pnpm@10.15.1",
   "dependencies": {
     "gl-matrix": "3.4.3"
   },
   "scripts": {
     "build": "./.scripts/build",
-    "clean": "rm -rf node_modules/ dist/ target/ pnpm-lock.yaml package-lock.json",
+    "clean": "rm -rf node_modules/ dist/ target/",
     "demo": "vite",
     "format": "prettier --config package.json --write 'src/**/*.{js,ts,json}'",
     "check": "tsc --noEmit",
-    "test:init": "pnpm exec playwright install firefox",
+    "test:init": "bun playwright install firefox",
     "test": "vitest run --browser --browser.headless"
   },
   "prettier": {
@@ -25,13 +24,12 @@
     "singleQuote": false
   },
   "devDependencies": {
-    "@esbuild/darwin-arm64": "0.25.11",
-    "@rollup/rollup-darwin-arm64": "4.52.5",
-    "@vitest/browser-playwright": "4.0.6",
+    "@rollup/rollup-darwin-arm64": "4.53.1",
+    "@vitest/browser-playwright": "4.0.8",
     "playwright": "1.56.1",
     "prettier": "3.6.2",
     "typescript": "5.9.2",
     "vite": "7.0.6",
-    "vitest": "4.0.6"
+    "vitest": "4.0.8"
   }
 }
