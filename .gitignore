@@ -1,4 +1,3 @@
-# == Common
 # System
 .DS_Store
 .DS_Store?
@@ -44,16 +43,18 @@ target/
 *.link
 *.link/
 
-# == Project's
-# Javascript/Typescripts
+---
+# JS/TS
 .npm
 npm-debug.log*
 node_modules/
-package-lock.json
-pnpm-lock.y*
 # Use .test.ts for test files instead of spec
 *.spec.ts
 
+# Prefer binary format for lockfiles. Text lockfiles create noisy diffs.
+package-lock.json
+pnpm-lock.y*
+bun.lock
 
 # Python
 __pycache__/

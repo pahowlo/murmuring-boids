@@ -23,7 +23,7 @@ def build() -> None:
         else:
             shutil.rmtree(target_dir)
 
-    exit_code, _, _ = run_cmd(f"pnpm tsc --outDir {str(target_dir / 'dist')!r}")
+    exit_code, _, _ = run_cmd(f"bun tsc --outDir {str(target_dir / 'dist')!r}")
     if exit_code != 0:
         exit(exit_code)
 
