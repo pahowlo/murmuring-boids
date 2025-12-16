@@ -1,4 +1,4 @@
-Contains source code for a semi-3D boids simulation.
+Contains source code for animating a semi-3D boids simulation on a canvas.
 
 ## Requirements
 
@@ -17,5 +17,5 @@ These are not strict requirements and you can get away using older versions - or
 ```sh
 bun install
 bun run build
-bun demo
+bun run demo
 ```

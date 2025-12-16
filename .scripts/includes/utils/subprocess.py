@@ -1,12 +1,10 @@
 #!/usr/bin/env python3.13
 
-import sys
 import os
 import pty
 import select
 import subprocess
-from typing import IO
-
+import sys
 
 class ShellProcessError(Exception):
     """Failed to successfully run a shell command."""
@@ -113,17 +111,3 @@ def run_interactive_cmd(
         )
     exit_code = proc.returncode
     return exit_code
-
-
-def _tee_stream(stream: IO[bytes], quiet: bool = False) -> list[str]:
-    out = []
-    eof = b""
-    for line in iter(stream.readline, eof):
-        if not line:
-            continue
-        if not quiet:
-            sys.stdout.buffer.write(line)  # Write raw bytes to preserve colors
-            sys.stdout.buffer.flush()
-        out.append(line.decode("utf-8", errors="replace").strip())
-    stream.close()
-    return out
