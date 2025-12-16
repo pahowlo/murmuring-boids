@@ -2,11 +2,10 @@
 
 import json
 import shutil
-import sys
 from pathlib import Path
 
 # When running a Python script, parent directory is added to sys.path
-from includes.utils.subprocess import run_cmd  # noqa: E402
+from includes.utils.subprocess import run_cmd
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 

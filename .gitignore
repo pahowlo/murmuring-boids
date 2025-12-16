@@ -26,6 +26,8 @@ logs/
 *.exe
 *.lib
 *.so
+.*-cache
+.*_cache
 build/
 dist/
 build/
