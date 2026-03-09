@@ -8,4 +8,4 @@ export interface Scenario {
   points: ScenarioPoint[]
 }
 
-export const scenarios: Scenario[]
+export const scenarios: Scenario[] = []

@@ -6,4 +6,12 @@ export default defineConfig({
   server: {
     open: "/demo.html",
   },
+
+  optimizeDeps: {
+    entries: [
+      'index.html',
+      'src/**/*.{ts,tsx,js,jsx}',
+      '!src/**/*.test.ts', // Explicitly ignore test files
+    ],
+  },
 })
