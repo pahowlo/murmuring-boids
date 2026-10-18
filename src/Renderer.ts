@@ -2,7 +2,6 @@ import { vec3, vec2 } from "gl-matrix"
 
 import type { RendererConfig } from "./config"
 import { HashPatternStyle } from "./utilities/canvas"
-import { Boid } from "./Boid"
 import { FlightZone, Box } from "./FlightZone"
 
 export const defaultRendererConfig: RendererConfig = {
@@ -339,10 +338,7 @@ export class Renderer {
     ctx.restore()
   }
 
-  drawBoid(boid: Boid, maxDepth: number): void {
-    const pos = boid.getPosition()
-    const vel = boid.getVelocity()
-
+  drawBoid(pos: Readonly<vec3>, vel: Readonly<vec3>, maxDepth: number): void {
     const startX = this.canvasBox.start.x
     const startY = this.canvasBox.start.y
 

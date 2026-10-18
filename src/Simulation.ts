@@ -2,8 +2,16 @@ import { vec3 } from "gl-matrix"
 
 import type { BoidConfig, SimulationConfig } from "./config"
 import { IncrementalSpatialGrid } from "./utilities/spatialGrid"
-import { Boid } from "./Boid"
 import { FlightZone, Box } from "./FlightZone"
+import { World, type Entity } from "./ecs/World"
+import {
+  createBoidArchetype,
+  createDetachedArchetype,
+  defaultBoidConfig,
+  type BoidArchetype,
+  type DetachedArchetype,
+} from "./ecs/components"
+import { updateBoid, type TransformReader } from "./ecs/systems/boidSystem"
 
 export const defaultSimulationConfig: SimulationConfig = {
   gravity: 0.05,
@@ -28,9 +36,13 @@ export class Simulation {
 
   maxBoidCount: number = 0
   boidConfig: Partial<BoidConfig> = {}
-  boids: Boid[] = []
+  private world: World = new World()
+  readonly boids: BoidArchetype = createBoidArchetype()
+  // Boids removed on stop, still referenced by the spatial grid until cleared
+  private detachedBoids: DetachedArchetype = createDetachedArchetype()
+  private transforms: TransformReader
 
-  private spatialGrid: IncrementalSpatialGrid<Boid>
+  private spatialGrid: IncrementalSpatialGrid<Entity>
   private randomSeed: { value: number; remainingTicks: number } = { value: 1, remainingTicks: 0 }
   private isRunning: boolean = false
 
@@ -43,9 +55,21 @@ export class Simulation {
       ...defaultSimulationConfig,
       ...simulationConfig,
     }
-    this.spatialGrid = new IncrementalSpatialGrid<Boid>(
+    const world = this.world
+    this.transforms = {
+      position(entity: Entity): Readonly<vec3> {
+        const { archetype, row } = world.locate(entity)!
+        return archetype.views.position[row]
+      },
+      velocity(entity: Entity): Readonly<vec3> {
+        const { archetype, row } = world.locate(entity)!
+        return archetype.views.velocity[row]
+      },
+    }
+    this.spatialGrid = new IncrementalSpatialGrid<Entity>(
       this.config.grid.cellSize,
       this.maxBoidCount,
+      this.transforms,
     )
   }
 
@@ -84,11 +108,11 @@ export class Simulation {
   }
 
   boidCount(): number {
-    return this.boids.length
+    return this.boids.count
   }
 
   addBoidsIfMissing(count: number): boolean {
-    const missingCount = this.maxBoidCount - this.boids.length
+    const missingCount = this.maxBoidCount - this.boids.count
     if (missingCount > 0) {
       for (let _ = 0; _ < Math.min(count, missingCount); _++) {
         this.spawnBoid(this.config.maxDepth, true)
@@ -99,17 +123,17 @@ export class Simulation {
   }
 
   removeBoids(count: number): void {
-    if (this.boids.length <= count) {
-      this.boids = []
+    if (this.boids.count <= count) {
+      this.despawnAll(this.boids)
+      this.despawnAll(this.detachedBoids) // No longer referenced by the spatial grid
       this.spatialGrid.clear()
       return // All boids were removed
     }
 
     for (let _ = 0; _ < count; _++) {
-      const boid = this.boids.pop()
-      if (boid) {
-        this.spatialGrid.remove(boid)
-      }
+      const boid = this.boids.entities[this.boids.count - 1]
+      this.spatialGrid.remove(boid)
+      this.world.despawn(boid)
     }
   }
 
@@ -124,25 +148,27 @@ export class Simulation {
     const gravity = vec3.create()
     gravity[gravityAxis] = gravitySign * this.config.gravity
 
-    for (const boid of this.boids) {
+    const ctx = {
+      closeRadius: this.spatialGrid.cellRadius,
+      centerOwMass: this.spatialGrid.centerOwMass,
+      flightZone,
+      maxHeight,
+      visibleDistance: this.config.visibleDistance,
+      visibleDepth: this.config.visibleDepth,
+      randomSeed: this.randomSeed.value,
+      gravity,
+    }
+
+    const boids = this.boids
+    for (let row = 0; row < boids.count; row++) {
+      const boid = boids.entities[row]
       const neighbors = this.spatialGrid.getNeighbors(boid, this.config.grid.neighborDistance)
       const closeNeighbors = this.spatialGrid.getNeighbors(
         boid,
         this.config.grid.closeNeighborDistance,
       )
 
-      boid.update(
-        neighbors,
-        closeNeighbors,
-        this.spatialGrid.cellRadius,
-        this.spatialGrid.centerOwMass,
-        flightZone,
-        maxHeight,
-        this.config.visibleDistance,
-        this.config.visibleDepth,
-        this.randomSeed.value,
-        gravity,
-      )
+      updateBoid(boids, row, neighbors, closeNeighbors, this.transforms, ctx)
       this.spatialGrid.update(boid)
     }
   }
@@ -164,16 +190,42 @@ export class Simulation {
       // Spawn new boid at max depth to make it slowly appear from the background
       depth,
     )
-    const boid = new Boid(this.nextDisplayId, position, this.boidConfig)
+    const config = {
+      ...this.boidConfig,
+      ...defaultBoidConfig,
+    }
+    const boid = this.world.spawn(this.boids, { config })
+    const row = this.boids.count - 1
+    const v = this.boids.views
+
+    this.boids.columns.displayId[row] = this.nextDisplayId
     this.nextDisplayId++
 
-    this.boids.push(boid)
+    const theta = Math.random() * 2 * Math.PI
+    vec3.copy(v.position[row], position)
+    const velocity = vec3.set(
+      v.velocity[row],
+      Math.cos(theta) * 0.5,
+      Math.sin(theta) * 0.5,
+      Math.random() - 0.5,
+    )
+    vec3.scale(velocity, velocity, config.maxSpeed)
+
     this.spatialGrid.update(boid)
   }
 
   stop(): void {
     this.isRunning = false
-    this.boids = []
+    // Detach boids: no longer simulated, but still referenced by the spatial grid
+    while (this.boids.count > 0) {
+      this.world.move(this.boids.entities[this.boids.count - 1], this.detachedBoids, {})
+    }
     this.maxBoidCount = 0
+  }
+
+  private despawnAll(archetype: BoidArchetype | DetachedArchetype): void {
+    while (archetype.count > 0) {
+      this.world.despawn(archetype.entities[archetype.count - 1])
+    }
   }
 }

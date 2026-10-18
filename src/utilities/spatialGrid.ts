@@ -2,13 +2,13 @@ import { vec3 } from "gl-matrix"
 
 import { sample } from "./random"
 
-interface Item {
-  getPosition(): Readonly<vec3>
-  getVelocity(): Readonly<vec3>
+interface ItemReader<T> {
+  position(item: T): Readonly<vec3>
+  velocity(item: T): Readonly<vec3>
 }
 
 // Main class
-export class IncrementalSpatialGrid<T extends Item> {
+export class IncrementalSpatialGrid<T> {
   readonly cellSize: vec3
   readonly cellRadius: number
   centerOwMass: vec3 = vec3.fromValues(500, 500, 100)
@@ -16,8 +16,10 @@ export class IncrementalSpatialGrid<T extends Item> {
 
   private grid: Map<string, T[]> = new Map()
   private itemCellKeys: Map<T, string> = new Map()
+  private reader: ItemReader<T>
 
-  constructor(cellSize: { x: number; y: number }, maxItemCount: number) {
+  constructor(cellSize: { x: number; y: number }, maxItemCount: number, reader: ItemReader<T>) {
+    this.reader = reader
     this.cellSize = vec3.fromValues(cellSize.x, cellSize.y, 0)
     this.cellRadius = Math.ceil(Math.sqrt((cellSize.x * cellSize.x + cellSize.y * cellSize.y) / 2))
     this.centerOwMassAlpha = 2 / (maxItemCount + 1)
@@ -40,7 +42,7 @@ export class IncrementalSpatialGrid<T extends Item> {
   }
 
   update(item: T): void {
-    const pos = item.getPosition()
+    const pos = this.reader.position(item)
     const newCellKey = this.getCellKey(pos)
 
     const cellKey = this.itemCellKeys.get(item)
@@ -66,7 +68,7 @@ export class IncrementalSpatialGrid<T extends Item> {
 
     // Update mass center
     vec3.scale(this.centerOwMass, this.centerOwMass, 1 - this.centerOwMassAlpha)
-    const nextPos = vec3.scaleAndAdd(vec3.create(), pos, item.getVelocity(), 2)
+    const nextPos = vec3.scaleAndAdd(vec3.create(), pos, this.reader.velocity(item), 2)
     vec3.scaleAndAdd(this.centerOwMass, this.centerOwMass, nextPos, this.centerOwMassAlpha)
   }
 
@@ -95,7 +97,7 @@ export class IncrementalSpatialGrid<T extends Item> {
    * Fetch all neighbors in the diamond-shaped area around the item of gridDistance length.
    */
   getNeighbors(item: T, gridDistance: { min: number; max: number; limitCount?: number }): T[] {
-    const cellKey = this.getCellKey(item.getPosition())
+    const cellKey = this.getCellKey(this.reader.position(item))
 
     const neighbors: T[] = []
     let remainingCount = gridDistance.limitCount || 100

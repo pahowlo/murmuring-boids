@@ -124,9 +124,14 @@ export class Controller {
     )
 
     // Forground
-    this.simulation.boids.forEach((boid) => {
-      this.renderer.drawBoid(boid, this.simulation.getConfig().maxDepth)
-    })
+    const boids = this.simulation.boids
+    for (let row = 0; row < boids.count; row++) {
+      this.renderer.drawBoid(
+        boids.views.position[row],
+        boids.views.velocity[row],
+        this.simulation.getConfig().maxDepth,
+      )
+    }
     if (this.debug) {
       this.renderer.drawHeight(maxHeight)
       this.renderer.drawCenterOwMass(this.simulation.getCenterOwMass())
