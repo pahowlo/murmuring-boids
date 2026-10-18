@@ -32,11 +32,7 @@ export class Controller {
 
   private renderingTasks: Map<string, renderingTask> = new Map()
 
-  constructor(
-    window: Window,
-    canvas: HTMLCanvasElement,
-    rendererConfig: Partial<RendererConfig> = {},
-  ) {
+  constructor(window: Window, canvas: HTMLCanvasElement, rendererConfig: Partial<RendererConfig> = {}) {
     this.renderer = new Renderer(window, canvas, rendererConfig)
     this.simulation = new Simulation(this.renderer.screenBox)
     this.flightZone = new FlightZone(this.renderer.canvasBox, this.simulation.getConfig().maxDepth)
@@ -117,20 +113,12 @@ export class Controller {
     // Draw
     this.renderer.clearCanvas()
     // Background
-    this.renderer.drawFlightZone(
-      this.flightZone,
-      this.simulation.getConfig().visibleDistance,
-      this.debug,
-    )
+    this.renderer.drawFlightZone(this.flightZone, this.simulation.getConfig().visibleDistance, this.debug)
 
     // Forground
     const boids = this.simulation.boids
     for (let row = 0; row < boids.count; row++) {
-      this.renderer.drawBoid(
-        boids.views.position[row],
-        boids.views.velocity[row],
-        this.simulation.getConfig().maxDepth,
-      )
+      this.renderer.drawBoid(boids.views.position[row], boids.views.velocity[row], this.simulation.getConfig().maxDepth)
     }
     if (this.debug) {
       this.renderer.drawHeight(maxHeight)

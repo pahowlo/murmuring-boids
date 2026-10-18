@@ -4,7 +4,7 @@
   "nodeModulesDir": "auto",
 
   // Delay package adoption to give the community time to flag malicious or broken versions.
-  "minimumDependencyAge": "P7D",
+  "minimumDependencyAge": "P10D",
 
   // Text lockfile (deno.lock). Set frozen=true to fail on lockfile drift.
   "lock": { "path": "deno.lock", "frozen": false },
@@ -17,7 +17,8 @@
     "bundle": "deno run --allow-read --allow-write --allow-run --allow-env .scripts/bundle.ts",
     "bundle:clean": "rm -rf dist/ target/",
     "demo": "vite",
-    "format": "prettier --config package.json --write 'src/**/*.{js,ts,json}'",
+    "format": "biome format --write",
+    "lint": "biome lint",
     "check": "tsc --noEmit",
     "test:browser": "playwright install chromium; vitest run --browser.name=chromium --browser.headless",
     "test:clean": "playwright uninstall"

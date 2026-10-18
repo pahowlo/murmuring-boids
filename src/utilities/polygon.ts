@@ -7,10 +7,7 @@ import { vec2, vec3 } from "gl-matrix"
  * @param polygon List of ordered vertices defining the polygon edges
  * @param minDistance Minimum distance between two vertices of an edge to consider them as distinct
  */
-export function validatePolygon<T extends vec2 | vec3>(
-  polygon: T[],
-  minDistance: number = 10,
-): T[] | undefined {
+export function validatePolygon<T extends vec2 | vec3>(polygon: T[], minDistance: number = 10): T[] | undefined {
   const n = polygon.length
   if (n < 3) {
     return undefined // Not a valid polygon
@@ -57,10 +54,7 @@ function segmentDirection<T extends vec2 | vec3>(start: T, end: T): [number, num
  * Find the closest orthogonal direction to a polygon edge from a given position.
  * No segment limit here, polygon edges are considered as infinite lines.
  */
-export function closestOrthogonalDirectionToPolygon(
-  polygon: vec3[] | Readonly<vec3[]>,
-  position: vec3,
-): vec3 {
+export function closestOrthogonalDirectionToPolygon(polygon: vec3[] | Readonly<vec3[]>, position: vec3): vec3 {
   let minDist = Infinity
   let closestOrthoVec = vec3.create()
 

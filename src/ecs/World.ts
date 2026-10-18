@@ -23,9 +23,13 @@ export class Archetype<S extends Schema, O extends object = object> {
   private readonly rawObjects: Record<string, unknown[]> = {}
 
   /** Column per component. */
-  readonly columns = this.rawColumns as unknown as { [K in keyof S]: ColumnOf<S[K]> }
+  readonly columns = this.rawColumns as unknown as {
+    [K in keyof S]: ColumnOf<S[K]>
+  }
   /** Row view per component: views.position[row] is a vec3 view into columns.position. */
-  readonly views = this.rawViews as unknown as { [K in keyof S]: ColumnOf<S[K]>[] }
+  readonly views = this.rawViews as unknown as {
+    [K in keyof S]: ColumnOf<S[K]>[]
+  }
   /** Non-numeric component per row. */
   readonly objects = this.rawObjects as unknown as { [K in keyof O]: O[K][] }
 
@@ -105,7 +109,6 @@ export class Archetype<S extends Schema, O extends object = object> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyArchetype = Archetype<any, any>
 
 export class World {
@@ -127,11 +130,7 @@ export class World {
   }
 
   /** Move entity to another archetype, copying the components both archetypes share. */
-  move<S extends Schema, O extends object>(
-    entity: Entity,
-    target: Archetype<S, O>,
-    objects: O,
-  ): void {
+  move<S extends Schema, O extends object>(entity: Entity, target: Archetype<S, O>, objects: O): void {
     const location = this.locations.get(entity)
     if (!location || location.archetype === target) return
 

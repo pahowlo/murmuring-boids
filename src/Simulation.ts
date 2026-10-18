@@ -66,11 +66,7 @@ export class Simulation {
         return archetype.views.velocity[row]
       },
     }
-    this.spatialGrid = new IncrementalSpatialGrid<Entity>(
-      this.config.grid.cellSize,
-      this.maxBoidCount,
-      this.transforms,
-    )
+    this.spatialGrid = new IncrementalSpatialGrid<Entity>(this.config.grid.cellSize, this.maxBoidCount, this.transforms)
   }
 
   refreshRandomSeed(): void {
@@ -163,10 +159,7 @@ export class Simulation {
     for (let row = 0; row < boids.count; row++) {
       const boid = boids.entities[row]
       const neighbors = this.spatialGrid.getNeighbors(boid, this.config.grid.neighborDistance)
-      const closeNeighbors = this.spatialGrid.getNeighbors(
-        boid,
-        this.config.grid.closeNeighborDistance,
-      )
+      const closeNeighbors = this.spatialGrid.getNeighbors(boid, this.config.grid.closeNeighborDistance)
 
       updateBoid(boids, row, neighbors, closeNeighbors, this.transforms, ctx)
       this.spatialGrid.update(boid)
@@ -203,12 +196,7 @@ export class Simulation {
 
     const theta = Math.random() * 2 * Math.PI
     vec3.copy(v.position[row], position)
-    const velocity = vec3.set(
-      v.velocity[row],
-      Math.cos(theta) * 0.5,
-      Math.sin(theta) * 0.5,
-      Math.random() - 0.5,
-    )
+    const velocity = vec3.set(v.velocity[row], Math.cos(theta) * 0.5, Math.sin(theta) * 0.5, Math.random() - 0.5)
     vec3.scale(velocity, velocity, config.maxSpeed)
 
     this.spatialGrid.update(boid)

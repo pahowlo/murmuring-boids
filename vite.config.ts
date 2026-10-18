@@ -9,9 +9,9 @@ export default defineConfig({
 
   optimizeDeps: {
     entries: [
-      'index.html',
-      'src/**/*.{ts,tsx,js,jsx}',
-      '!src/**/*.test.ts', // Explicitly ignore test files
+      "index.html",
+      "src/**/*.{ts,tsx,js,jsx}",
+      "!src/**/*.test.ts", // Explicitly ignore test files
     ],
   },
 })

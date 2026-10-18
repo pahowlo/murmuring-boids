@@ -9,16 +9,11 @@
   "dependencies": {
     "gl-matrix": "3.4.3"
   },
-  "prettier": {
-    "printWidth": 100,
-    "semi": false,
-    "singleQuote": false
-  },
   "devDependencies": {
+    "@biomejs/biome": "2.2.6",
     "@rollup/rollup-darwin-arm64": "4.53.1",
     "@vitest/browser-playwright": "4.0.8",
     "playwright": "1.56.1",
-    "prettier": "3.6.2",
     "typescript": "5.9.2",
     "vite": "7.0.6",
     "vitest": "4.0.8"

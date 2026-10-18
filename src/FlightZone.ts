@@ -17,10 +17,7 @@ export class Box {
 
   equals(o: Box): boolean {
     return (
-      this.start.x === o.start.x &&
-      this.start.y === o.start.y &&
-      this.width === o.width &&
-      this.height === o.height
+      this.start.x === o.start.x && this.start.y === o.start.y && this.width === o.width && this.height === o.height
     )
   }
 }
@@ -47,10 +44,7 @@ export class FlightZone {
 
   // Polygon
   private defaultPolygon(): vec3[] {
-    const pad = Math.min(
-      this.canvasBox.width * this.paddingRatio,
-      this.canvasBox.height * this.paddingRatio,
-    )
+    const pad = Math.min(this.canvasBox.width * this.paddingRatio, this.canvasBox.height * this.paddingRatio)
     const defaultPolygon = [
       // left-top
       vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.start.y + pad, this.halfDepth),
@@ -107,12 +101,8 @@ export class FlightZone {
   resize(newCanvasBox: Box): void {
     if (this.canvasBox.equals(newCanvasBox)) return // No resize required
 
-    const scaleX =
-      newCanvasBox.width === this.canvasBox.width ? 1 : newCanvasBox.width / this.canvasBox.width
-    const scaleY =
-      newCanvasBox.height === this.canvasBox.height
-        ? 1
-        : newCanvasBox.height / this.canvasBox.height
+    const scaleX = newCanvasBox.width === this.canvasBox.width ? 1 : newCanvasBox.width / this.canvasBox.width
+    const scaleY = newCanvasBox.height === this.canvasBox.height ? 1 : newCanvasBox.height / this.canvasBox.height
 
     // Polygon
     for (const point of this.polygon) {

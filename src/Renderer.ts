@@ -39,11 +39,7 @@ export class Renderer {
 
   private patternCache: { [name: string]: CanvasPattern } = {}
 
-  constructor(
-    window: Window,
-    canvas: HTMLCanvasElement,
-    rendererConfig: Partial<RendererConfig> = {},
-  ) {
+  constructor(window: Window, canvas: HTMLCanvasElement, rendererConfig: Partial<RendererConfig> = {}) {
     this.window = window
     this.canvas = canvas
 
@@ -215,9 +211,7 @@ export class Renderer {
     const polygon = flightZone.getPolygon()
     const centroids = flightZone.getCentroids()
 
-    const color = !debug
-      ? this.config.flightZone.polygonColor
-      : this.config.debug.flightZone.polygonColor
+    const color = !debug ? this.config.flightZone.polygonColor : this.config.debug.flightZone.polygonColor
     const backgroundColor = color + "0d" // ~5% opacity in 255 hex
 
     const ctx = this.renderingContext
@@ -344,8 +338,7 @@ export class Renderer {
 
     const depthRatio = 1.2 - Math.max(0.2, Math.min(1.2, pos[2] / maxDepth))
 
-    const boidSize =
-      this.config.boids.sizeScreenHeightRatio * this.screenBox.height + depthRatio * 2 - 1
+    const boidSize = this.config.boids.sizeScreenHeightRatio * this.screenBox.height + depthRatio * 2 - 1
 
     const ctx = this.renderingContext
     ctx.save()

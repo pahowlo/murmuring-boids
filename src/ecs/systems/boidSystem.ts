@@ -128,24 +128,14 @@ export function updateBoid(
     c.followCentroidsTicks[row] = 5
   }
   if (c.followCentroidsTicks[row] > 0) {
-    vec3.scaleAndAdd(
-      boidAcceleration,
-      boidAcceleration,
-      followCentroidsDirection,
-      config.acceleration.followCentroids,
-    )
+    vec3.scaleAndAdd(boidAcceleration, boidAcceleration, followCentroidsDirection, config.acceleration.followCentroids)
     c.followCentroidsTicks[row]--
   }
 
   // Stay close to center of mass of all boids
   const diffCenterOwMass = vec3.subtract(tmp, ctx.centerOwMass, position)
   vec3.normalize(diffCenterOwMass, diffCenterOwMass)
-  vec3.scaleAndAdd(
-    boidAcceleration,
-    boidAcceleration,
-    diffCenterOwMass,
-    config.acceleration.stayCloseToCenterOwfMass,
-  )
+  vec3.scaleAndAdd(boidAcceleration, boidAcceleration, diffCenterOwMass, config.acceleration.stayCloseToCenterOwfMass)
 
   // Cohesion and alignment: Stay with the flock
   vec3.add(
@@ -156,13 +146,7 @@ export function updateBoid(
   vec3.add(
     boidAcceleration,
     boidAcceleration,
-    alignmentAcceleration(
-      position,
-      neighbors,
-      transforms,
-      ctx.visibleDepth,
-      config.acceleration.alignment,
-    ),
+    alignmentAcceleration(position, neighbors, transforms, ctx.visibleDepth, config.acceleration.alignment),
   )
 
   // Separation: Avoid collisions with neighbors

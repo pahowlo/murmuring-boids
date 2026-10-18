@@ -45,10 +45,7 @@ export type BoidObjects = { config: BoidConfig }
 
 // == Archetypes
 export function createBoidArchetype() {
-  return new Archetype<typeof Transform & typeof BoidState, BoidObjects>(
-    { ...Transform, ...BoidState },
-    ["config"],
-  )
+  return new Archetype<typeof Transform & typeof BoidState, BoidObjects>({ ...Transform, ...BoidState }, ["config"])
 }
 export type BoidArchetype = ReturnType<typeof createBoidArchetype>
 

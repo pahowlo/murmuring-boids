@@ -77,9 +77,7 @@ export class IncrementalSpatialGrid<T> {
     this.itemCellKeys.clear()
   }
 
-  getRandomCellCoords():
-    | { startX: number; startY: number; width: number; height: number }
-    | undefined {
+  getRandomCellCoords(): { startX: number; startY: number; width: number; height: number } | undefined {
     const cellKeys = Array.from(this.grid.keys())
     if (cellKeys.length === 0) return undefined
 
