@@ -49,11 +49,7 @@ export class Controller {
 
     this.simulation.boidConfig = boidConfig
     this.simulation.maxBoidCount = maxBoidCount
-
-    if (this.isRunning) {
-      this.simulation.boidConfig = boidConfig
-      return
-    }
+    if (this.isRunning) return
 
     this.isRunning = true
     this.simulation.start(Math.floor(maxBoidCount * 0.7), boidConfig)
@@ -76,6 +72,7 @@ export class Controller {
       const waitTime = this.TARGET_TICK_TIME - (performance.now() - prevTime)
       if (waitTime > 0) {
         await new Promise((resolve) => setTimeout(resolve, waitTime))
+        if (!this.isRunning) return
       }
     } else if (targetTpsDiff <= -8) {
       this.simulation.removeBoids(5)
