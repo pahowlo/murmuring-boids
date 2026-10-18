@@ -106,6 +106,8 @@ export function updateBoid(
       config.acceleration.backToFlightZone,
     )
     c.backToFlightZoneTicks[row]--
+    // Smoother U-turn when going back to the flight zone
+    maxTurnAngleDeg = Math.min(maxTurnAngleDeg, 90)
   }
 
   // Centroid attraction: Converge towards closest visible centroids if any

@@ -20,16 +20,24 @@ export function limitTurn(out: vec3, velocity: vec3, acceleration: vec3, maxAngl
     return // Nothing to do
   }
 
-  // Calculate interpolation factor to limit to maxAngle.
-  // Linear interpolation (lerp) can underestimate the angle up to 15% for 120 degrees
-  // hence the manual adjustment.
-  // TODO: implement spherical interpolation (slerp) to avoid this.
-  const t = (maxAngleRad + 20) / angleRad
+  // Rotate velocity direction towards acceleration direction by exactly maxAngle (slerp).
+  // Component of acceleration direction orthogonal to velocity direction:
+  const ortho = vec3.scaleAndAdd(
+    vec3.create(),
+    normalizedAccel,
+    normalizedDir,
+    -vec3.dot(normalizedAccel, normalizedDir),
+  )
+  if (vec3.squaredLength(ortho) < 1e-12) {
+    // Acceleration is exactly opposite: pick any perpendicular axis
+    const axis = Math.abs(normalizedDir[0]) < 0.9 ? vec3.fromValues(1, 0, 0) : vec3.fromValues(0, 1, 0)
+    vec3.cross(ortho, normalizedDir, axis)
+  }
+  vec3.normalize(ortho, ortho)
 
-  // Spherically interpolate between velocity direction and acceleration direction
-  vec3.lerp(out, normalizedDir, normalizedAccel, t)
+  vec3.scale(out, normalizedDir, Math.cos(maxAngleRad))
+  vec3.scaleAndAdd(out, out, ortho, Math.sin(maxAngleRad))
 
   // Finally, scale to match acceleration
-  vec3.normalize(out, out) // Lerp doesn't preserve length
   vec3.scale(out, out, vec3.length(acceleration))
 }
