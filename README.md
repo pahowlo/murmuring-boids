@@ -2,15 +2,16 @@ Contains source code for animating a semi-3D boids simulation on a canvas.
 
 ## Requirements
 
-- [bun.sh](https://bun.sh) (see `.bun-version`) to install dependencies and run tests.
+- [Deno](https://deno.com) to install dependencies and run tasks.
 
-These are not strict requirements and you can get away using older versions - or completely different tools by tweaking the scripts.
+Refer to [mise.toml](https://mise.jdx.dev) for the versions of required tools for this project.
+<br>These are not strict requirements and you can get away using older versions - or completely different tools by tweaking the tasks.
 
 ## Quick start
 
-0. Make sure the correct version of `bun` is available.
+0. Install project tools. E.g. `mise install`.
 
-1. Install dependencies, build the project and start the dev server (vite) to see the demo
+1. Install project dependencies and start the dev server (vite) to run the demo
 ```sh
-bun install demo
+deno install && deno task demo
 ```

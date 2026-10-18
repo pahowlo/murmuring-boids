@@ -1,0 +1,25 @@
+{
+  // npm deps stay in package.json; Deno reads it natively.
+  // node_modules/ required by vite/vitest/playwright.
+  "nodeModulesDir": "auto",
+
+  // Delay package adoption to give the community time to flag malicious or broken versions.
+  "minimumDependencyAge": "P7D",
+
+  // Text lockfile (deno.lock). Set frozen=true to fail on lockfile drift.
+  "lock": { "path": "deno.lock", "frozen": false },
+
+  // N.B. Deno does not run npm lifecycle scripts unless explicitly allowed (--allow-scripts).
+
+  "tasks": {
+    "clean": "deno task install:clean && deno task bundle:clean && deno task test:clean",
+    "install:clean": "rm -rf node_modules/",
+    "bundle": "deno run --allow-read --allow-write --allow-run --allow-env .scripts/bundle.ts",
+    "bundle:clean": "rm -rf dist/ target/",
+    "demo": "vite",
+    "format": "prettier --config package.json --write 'src/**/*.{js,ts,json}'",
+    "check": "tsc --noEmit",
+    "test:browser": "playwright install chromium; vitest run --browser.name=chromium --browser.headless",
+    "test:clean": "playwright uninstall"
+  }
+}

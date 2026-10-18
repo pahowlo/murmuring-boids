@@ -1,11 +1,17 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S deno run --allow-read --allow-write --allow-run --allow-env
 
-import { $ } from "bun";
 import { existsSync, rmSync, writeFileSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import process from "node:process";
 
-const ROOT_DIR = resolve(import.meta.dir, "..");
+const ROOT_DIR = resolve(import.meta.dirname!, "..");
 console.log(`ROOT_DIR    = ${ROOT_DIR}\n`);
+
+/** Run a node_modules/.bin command; throws on non-zero exit. */
+async function run(cmd: string, ...args: string[]): Promise<void> {
+  const { code } = await new Deno.Command(join(ROOT_DIR, "node_modules", ".bin", cmd), { args }).spawn().status;
+  if (code !== 0) throw new Error(`${cmd} exited with code ${code}`);
+}
 
 async function bundle() {
   const targetDir = join(ROOT_DIR, "target");
@@ -27,7 +33,7 @@ async function bundle() {
 async function buildTargetDist(targetDir: string): Promise<void> {
   const distDir = join(targetDir, "dist");
   try {
-    await $`bun tsc --outDir ${distDir}`;
+    await run("tsc", "--outDir", distDir);
   } catch (err) {
     console.error(`ERROR: Failed to transpile TS to JS+D.TS: ${err}`);
     process.exit(1);
