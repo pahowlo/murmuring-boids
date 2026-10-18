@@ -1,4 +1,5 @@
 import { vec3 } from "gl-matrix"
+import type { BoidConfig } from "../../config"
 import type { FlightZone } from "../../FlightZone"
 import { limitTurn } from "../../utilities/constraints"
 import { closestOrthogonalDirectionToPolygon } from "../../utilities/polygon"
@@ -6,6 +7,7 @@ import type { BoidArchetype } from "../components"
 import type { Entity } from "../World"
 
 export type BoidContext = {
+  config: BoidConfig
   closeRadius: number
   centerOwMass: vec3
   flightZone: FlightZone
@@ -38,7 +40,7 @@ export function updateBoid(
   ctx: BoidContext,
 ): void {
   const v = boids.views
-  const config = boids.objects[row]
+  const config = ctx.config
   const position = v.position[row]
   const velocity = v.velocity[row]
   const acceleration = v.acceleration[row]

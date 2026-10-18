@@ -145,6 +145,7 @@ export class Simulation {
     gravity[gravityAxis] = gravitySign * this.config.gravity
 
     const ctx = {
+      config: updateBoidConfig(defaultBoidConfig, this.boidConfig),
       closeRadius: this.spatialGrid.cellRadius,
       centerOwMass: this.spatialGrid.centerOwMass,
       flightZone,
@@ -184,7 +185,7 @@ export class Simulation {
       depth,
     )
     const config = updateBoidConfig(defaultBoidConfig, this.boidConfig)
-    const boid = this.world.spawn(this.boids, config)
+    const boid = this.world.spawn(this.boids)
     const row = this.boids.count - 1
     const v = this.boids.views
 
@@ -203,7 +204,7 @@ export class Simulation {
     this.isRunning = false
     // Detach boids: no longer simulated, but still referenced by the spatial grid
     while (this.boids.count > 0) {
-      this.world.move(this.boids.entities[this.boids.count - 1], this.detachedBoids, undefined)
+      this.world.move(this.boids.entities[this.boids.count - 1], this.detachedBoids)
     }
     this.maxBoidCount = 0
   }

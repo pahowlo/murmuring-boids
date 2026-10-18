@@ -41,7 +41,7 @@ type TransformKey = keyof typeof Transform
 type BoidKey = TransformKey | keyof typeof BoidState
 
 // == Archetypes
-export type BoidArchetype = Archetype<BoidKey, BoidConfig>
+export type BoidArchetype = Archetype<BoidKey>
 export function createBoidArchetype(): BoidArchetype {
   return new Archetype({ ...Transform, ...BoidState })
 }
