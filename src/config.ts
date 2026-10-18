@@ -13,6 +13,14 @@ export interface BoidConfig {
   }
 }
 
+export function updateBoidConfig(config: BoidConfig, update: Partial<BoidConfig>): BoidConfig {
+  return {
+    ...config,
+    ...update,
+    acceleration: { ...config.acceleration, ...update.acceleration },
+  }
+}
+
 export interface RendererConfig {
   clearCanvasIfResized: boolean
   boids: {

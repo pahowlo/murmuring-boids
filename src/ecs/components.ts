@@ -1,5 +1,5 @@
 import type { BoidConfig } from "../config"
-import { Archetype, type ColumnSpec } from "./World"
+import { Archetype } from "./World"
 
 export const defaultBoidConfig: BoidConfig = {
   minSpeed: 1,
@@ -16,41 +16,38 @@ export const defaultBoidConfig: BoidConfig = {
   },
 }
 
-const vec3Column: ColumnSpec<Float32Array> = { type: Float32Array, stride: 3 }
-const int32: ColumnSpec<Int32Array> = { type: Int32Array, stride: 1 }
-const flag: ColumnSpec<Uint8Array> = { type: Uint8Array, stride: 1 }
-
-// == Components
+// == Components: name -> stride (Float32 values; integers exact up to 2^24)
 export const Transform = {
-  position: vec3Column,
-  velocity: vec3Column,
+  position: 3,
+  velocity: 3,
 }
 
 export const BoidState = {
-  displayId: int32,
-  acceleration: vec3Column,
-  isOutside: flag,
+  displayId: 1,
+  acceleration: 3,
+  isOutside: 1, // 0 | 1
   // lastPositionInside is undefined if hasLastPositionInside == 0
-  lastPositionInside: vec3Column,
-  hasLastPositionInside: flag,
+  lastPositionInside: 3,
+  hasLastPositionInside: 1, // 0 | 1
   // backToFlightZone is undefined if backToFlightZoneTicks <= 0
-  backToFlightZoneDirection: vec3Column,
-  backToFlightZoneTicks: int32,
+  backToFlightZoneDirection: 3,
+  backToFlightZoneTicks: 1,
   // followCentroids is undefined if followCentroidsTicks <= 0
-  followCentroidsDirection: vec3Column,
-  followCentroidsTicks: int32,
+  followCentroidsDirection: 3,
+  followCentroidsTicks: 1,
 }
 
-export type BoidObjects = { config: BoidConfig }
+type TransformKey = keyof typeof Transform
+type BoidKey = TransformKey | keyof typeof BoidState
 
 // == Archetypes
-export function createBoidArchetype() {
-  return new Archetype<typeof Transform & typeof BoidState, BoidObjects>({ ...Transform, ...BoidState }, ["config"])
+export type BoidArchetype = Archetype<BoidKey, BoidConfig>
+export function createBoidArchetype(): BoidArchetype {
+  return new Archetype({ ...Transform, ...BoidState })
 }
-export type BoidArchetype = ReturnType<typeof createBoidArchetype>
 
 /** Boids removed from the simulation on stop, but still referenced by the spatial grid. */
-export function createDetachedArchetype() {
-  return new Archetype<typeof Transform, object>(Transform)
+export type DetachedArchetype = Archetype<TransformKey>
+export function createDetachedArchetype(): DetachedArchetype {
+  return new Archetype(Transform)
 }
-export type DetachedArchetype = ReturnType<typeof createDetachedArchetype>

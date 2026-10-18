@@ -1,6 +1,6 @@
 import { vec3 } from "gl-matrix"
 
-import type { BoidConfig, SimulationConfig } from "./config"
+import { type BoidConfig, type SimulationConfig, updateBoidConfig } from "./config"
 import {
   type BoidArchetype,
   createBoidArchetype,
@@ -59,11 +59,11 @@ export class Simulation {
     this.transforms = {
       position(entity: Entity): Readonly<vec3> {
         const { archetype, row } = world.locate(entity)
-        return archetype.views.position[row] as Float32Array
+        return archetype.views.position[row]
       },
       velocity(entity: Entity): Readonly<vec3> {
         const { archetype, row } = world.locate(entity)
-        return archetype.views.velocity[row] as Float32Array
+        return archetype.views.velocity[row]
       },
     }
     this.spatialGrid = new IncrementalSpatialGrid<Entity>(this.config.grid.cellSize, this.maxBoidCount, this.transforms)
@@ -183,11 +183,8 @@ export class Simulation {
       // Spawn new boid at max depth to make it slowly appear from the background
       depth,
     )
-    const config = {
-      ...this.boidConfig,
-      ...defaultBoidConfig,
-    }
-    const boid = this.world.spawn(this.boids, { config })
+    const config = updateBoidConfig(defaultBoidConfig, this.boidConfig)
+    const boid = this.world.spawn(this.boids, config)
     const row = this.boids.count - 1
     const v = this.boids.views
 
@@ -206,7 +203,7 @@ export class Simulation {
     this.isRunning = false
     // Detach boids: no longer simulated, but still referenced by the spatial grid
     while (this.boids.count > 0) {
-      this.world.move(this.boids.entities[this.boids.count - 1], this.detachedBoids, {})
+      this.world.move(this.boids.entities[this.boids.count - 1], this.detachedBoids, undefined)
     }
     this.maxBoidCount = 0
   }

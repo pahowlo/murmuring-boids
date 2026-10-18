@@ -38,7 +38,7 @@ export function updateBoid(
   ctx: BoidContext,
 ): void {
   const v = boids.views
-  const config = boids.objects.config[row]
+  const config = boids.objects[row]
   const position = v.position[row]
   const velocity = v.velocity[row]
   const acceleration = v.acceleration[row]
