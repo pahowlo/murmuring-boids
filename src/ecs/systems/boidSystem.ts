@@ -1,10 +1,9 @@
 import { vec3 } from "gl-matrix"
-
+import type { FlightZone } from "../../FlightZone"
 import { limitTurn } from "../../utilities/constraints"
 import { closestOrthogonalDirectionToPolygon } from "../../utilities/polygon"
-import type { FlightZone } from "../../FlightZone"
-import type { Entity } from "../World"
 import type { BoidArchetype } from "../components"
+import type { Entity } from "../World"
 
 export type BoidContext = {
   closeRadius: number

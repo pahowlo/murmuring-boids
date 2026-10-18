@@ -1,8 +1,7 @@
 import { vec2 } from "gl-matrix"
-import { validatePolygon } from "./polygon"
-import { describe, test, expect } from "vitest"
-
+import { describe, expect, test } from "vitest"
 import { scenarios } from "./__tests___/scenarios"
+import { validatePolygon } from "./polygon"
 
 describe("Polygon scenarios", () => {
   for (const [idx, scenario] of scenarios.entries()) {

@@ -1,4 +1,4 @@
-import { vec3, vec2 } from "gl-matrix"
+import { type vec2, vec3 } from "gl-matrix"
 
 import { isInPolygon } from "./utilities/rayCasting2D"
 

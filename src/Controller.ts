@@ -1,9 +1,9 @@
 import type { BoidConfig, RendererConfig } from "./config"
-import { FreqEstimator } from "./utilities/freqEstimator"
-import { MouseStatus } from "./inputs/MouseStatus"
 import { FlightZone } from "./FlightZone"
+import { MouseStatus } from "./inputs/MouseStatus"
 import { Renderer } from "./Renderer"
 import { Simulation } from "./Simulation"
+import { FreqEstimator } from "./utilities/freqEstimator"
 
 type renderingTask = {
   eTag: number // Too invalidate if no longer needed

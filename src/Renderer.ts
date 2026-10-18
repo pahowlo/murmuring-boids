@@ -1,8 +1,8 @@
-import { vec3, vec2 } from "gl-matrix"
+import type { vec2, vec3 } from "gl-matrix"
 
 import type { RendererConfig } from "./config"
+import { Box, type FlightZone } from "./FlightZone"
 import { HashPatternStyle } from "./utilities/canvas"
-import { FlightZone, Box } from "./FlightZone"
 
 export const defaultRendererConfig: RendererConfig = {
   clearCanvasIfResized: true,
@@ -134,19 +134,17 @@ export class Renderer {
     this.canvas.width = displayWidth * this.devicePixelRatio
     this.canvas.height = displayHeight * this.devicePixelRatio
 
-    // Updating canvas width/height resets rendering context (inc. scaling)
+    // Updating canvas width/height resets rendering context (incl. scaling)
     // thus no risk of compounding
-    // Scale rendering
     ctx.scale(this.devicePixelRatio, this.devicePixelRatio)
   }
 
   clearCanvas(): void {
     const ctx = this.renderingContext
 
-    // HACK: Updating canvas width/height resets rendering context (inc. scaling)
-    /* eslint-disable no-self-assign */
+    // HACK: Updating canvas width/height resets rendering context (incl. scaling)
+    // biome-ignore lint/correctness/noSelfAssign: see HACK above
     ctx.canvas.width = ctx.canvas.width
-    /* eslint-enable no-self-assign */
 
     // Scale rendering
     ctx.scale(this.devicePixelRatio, this.devicePixelRatio)
@@ -212,7 +210,7 @@ export class Renderer {
     const centroids = flightZone.getCentroids()
 
     const color = !debug ? this.config.flightZone.polygonColor : this.config.debug.flightZone.polygonColor
-    const backgroundColor = color + "0d" // ~5% opacity in 255 hex
+    const backgroundColor = `${color}0d` // ~5% opacity in 255 hex
 
     const ctx = this.renderingContext
     ctx.save()
@@ -291,11 +289,11 @@ export class Renderer {
     ctx.lineTo(x, y + ptRadius)
     ctx.stroke()
 
-    let fillStyle = this.patternCache["DraftPolygonFillStyle"]
+    let fillStyle = this.patternCache.DraftPolygonFillStyle
     if (!fillStyle) {
       // 33 ~ 20% opacity in 255 hex
       fillStyle = HashPatternStyle(color + "33", 8)
-      this.patternCache["DraftPolygonFillStyle"] = fillStyle
+      this.patternCache.DraftPolygonFillStyle = fillStyle
     }
     ctx.fillStyle = fillStyle
     // Draw polygon

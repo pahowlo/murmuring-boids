@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <style>
       body {
@@ -87,14 +87,14 @@
 
         // Draw pre-defined
         for (const scenario of scenarios) {
-          drawPolygon(scenario["polygon"], "#3498db")
+          drawPolygon(scenario.polygon, "#3498db")
 
           // Draw points
-          if (!scenario["points"]) continue
+          if (!scenario.points) continue
 
-          scenario["points"].forEach((point, index) => {
-            const [x, y] = point["coord"]
-            if (point["isInPolygon"]) {
+          scenario.points.forEach((point, index) => {
+            const [x, y] = point.coord
+            if (point.isInPolygon) {
               ctx.fillStyle = "#2ecc71" // Green for inside points
             } else {
               ctx.fillStyle = "#e74c3c" // Red for outside points

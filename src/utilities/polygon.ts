@@ -1,4 +1,4 @@
-import { vec2, vec3 } from "gl-matrix"
+import { type vec2, vec3 } from "gl-matrix"
 
 /**
  * Return new polygon after removing duplicate points and collinear segments,
@@ -24,7 +24,7 @@ export function validatePolygon<T extends vec2 | vec3>(polygon: T[], minDistance
     // Check if duplicated point
     const manDist = Math.abs(point[0] - nextPoint[0]) + Math.abs(point[1] - nextPoint[1])
     // Max manhattan distance on circle is: radius * sqrt(2) ~ 1.414 (45 degrees angle)
-    if (manDist <= minDistance * 1.414) {
+    if (manDist <= minDistance * Math.SQRT2) {
       continue // Skip
     }
     // Skip if collinear segment
@@ -99,5 +99,5 @@ export function closestOrthogonalDirectionToPolygon(polygon: vec3[] | Readonly<v
       closestOrthoVec = orthoVec
     }
   }
-  return closestOrthoVec!
+  return closestOrthoVec
 }

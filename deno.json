@@ -12,14 +12,16 @@
   // N.B. Deno does not run npm lifecycle scripts unless explicitly allowed (--allow-scripts).
 
   "tasks": {
+    "setup": "git config core.hooksPath .githooks",
     "clean": "deno task install:clean && deno task bundle:clean && deno task test:clean",
     "install:clean": "rm -rf node_modules/",
     "bundle": "deno run --allow-read --allow-write --allow-run --allow-env .scripts/bundle.ts",
     "bundle:clean": "rm -rf dist/ target/",
     "demo": "vite",
     "format": "biome format --write",
-    "lint": "biome lint",
-    "check": "tsc --noEmit",
+    "check": "(deno task check:lint || deno task format ) && deno task check:types",
+    "check:lint": "biome check --error-on-warnings",
+    "check:types": "tsc --noEmit",
     "test:browser": "playwright install chromium; vitest run --browser.name=chromium --browser.headless",
     "test:clean": "playwright uninstall"
   }

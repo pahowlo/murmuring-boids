@@ -16,6 +16,10 @@
   },
   "linter": {
     "enabled": true,
-    "rules": { "recommended": true }
+    "rules": {
+      "preset": "recommended",
+      "style": { "useTemplate": "off" },
+      "complexity": { "useLiteralKeys": "error" }
+    }
   }
 }

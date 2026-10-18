@@ -2,7 +2,7 @@
  * Shuffle array in-place, using Fisher-Yates method.
  */
 export function shuffle<T>(items: T[]): void {
-  let items_i
+  let items_i: T
   for (let i = items.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     // Swap items randomly while preserving the indexes greater than i

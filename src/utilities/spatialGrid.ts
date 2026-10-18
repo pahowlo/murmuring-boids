@@ -2,6 +2,8 @@ import { vec3 } from "gl-matrix"
 
 import { sample } from "./random"
 
+export type CellCoords = { startX: number; startY: number; width: number; height: number }
+
 interface ItemReader<T> {
   position(item: T): Readonly<vec3>
   velocity(item: T): Readonly<vec3>
@@ -77,7 +79,7 @@ export class IncrementalSpatialGrid<T> {
     this.itemCellKeys.clear()
   }
 
-  getRandomCellCoords(): { startX: number; startY: number; width: number; height: number } | undefined {
+  getRandomCellCoords(): CellCoords | undefined {
     const cellKeys = Array.from(this.grid.keys())
     if (cellKeys.length === 0) return undefined
 
@@ -101,7 +103,7 @@ export class IncrementalSpatialGrid<T> {
     let remainingCount = gridDistance.limitCount || 100
 
     let minGridDistance = Math.max(0, gridDistance.min)
-    if (minGridDistance == 0) {
+    if (minGridDistance === 0) {
       const cell = this.grid.get(cellKey)
       if (cell) {
         for (const neighbor of cell) {
@@ -146,7 +148,7 @@ export class IncrementalSpatialGrid<T> {
     const idx = cell.indexOf(item)
     if (idx === -1) return // Not found
 
-    if (cell.length == 1) {
+    if (cell.length === 1) {
       // Remove empty cell
       this.grid.delete(cellKey)
       return

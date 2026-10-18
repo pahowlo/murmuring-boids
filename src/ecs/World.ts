@@ -109,7 +109,7 @@ export class Archetype<S extends Schema, O extends object = object> {
   }
 }
 
-type AnyArchetype = Archetype<any, any>
+type AnyArchetype = Archetype<Schema, object>
 
 export class World {
   private nextEntity: Entity = 0
@@ -140,9 +140,13 @@ export class World {
     this.locations.set(entity, { archetype: target, row })
   }
 
-  /** Return location of entity. Undefined if despawned. */
-  locate(entity: Entity): { archetype: AnyArchetype; row: number } | undefined {
-    return this.locations.get(entity)
+  /** Return location of entity. Throw if despawned. */
+  locate(entity: Entity): { archetype: AnyArchetype; row: number } {
+    const loc = this.locations.get(entity)
+    if (loc == null) {
+      throw new Error(`Entity ${entity} not found`)
+    }
+    return loc
   }
 
   private detach(archetype: AnyArchetype, row: number): void {

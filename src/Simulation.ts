@@ -1,17 +1,17 @@
 import { vec3 } from "gl-matrix"
 
 import type { BoidConfig, SimulationConfig } from "./config"
-import { IncrementalSpatialGrid } from "./utilities/spatialGrid"
-import { FlightZone, Box } from "./FlightZone"
-import { World, type Entity } from "./ecs/World"
 import {
+  type BoidArchetype,
   createBoidArchetype,
   createDetachedArchetype,
-  defaultBoidConfig,
-  type BoidArchetype,
   type DetachedArchetype,
+  defaultBoidConfig,
 } from "./ecs/components"
-import { updateBoid, type TransformReader } from "./ecs/systems/boidSystem"
+import { type TransformReader, updateBoid } from "./ecs/systems/boidSystem"
+import { type Entity, World } from "./ecs/World"
+import type { Box, FlightZone } from "./FlightZone"
+import { type CellCoords, IncrementalSpatialGrid } from "./utilities/spatialGrid"
 
 export const defaultSimulationConfig: SimulationConfig = {
   gravity: 0.05,
@@ -58,12 +58,12 @@ export class Simulation {
     const world = this.world
     this.transforms = {
       position(entity: Entity): Readonly<vec3> {
-        const { archetype, row } = world.locate(entity)!
-        return archetype.views.position[row]
+        const { archetype, row } = world.locate(entity)
+        return archetype.views.position[row] as Float32Array
       },
       velocity(entity: Entity): Readonly<vec3> {
-        const { archetype, row } = world.locate(entity)!
-        return archetype.views.velocity[row]
+        const { archetype, row } = world.locate(entity)
+        return archetype.views.velocity[row] as Float32Array
       },
     }
     this.spatialGrid = new IncrementalSpatialGrid<Entity>(this.config.grid.cellSize, this.maxBoidCount, this.transforms)
@@ -167,7 +167,7 @@ export class Simulation {
   }
 
   private spawnBoid(depth: number, withinFlock?: boolean): void {
-    let cellCoords
+    let cellCoords: CellCoords | undefined
     if (withinFlock) {
       cellCoords = this.spatialGrid.getRandomCellCoords()
     }
