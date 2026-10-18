@@ -1,13 +1,7 @@
 import { vec3 } from "gl-matrix"
 
 import { type BoidConfig, type SimulationConfig, updateBoidConfig } from "./config"
-import {
-  type BoidArchetype,
-  createBoidArchetype,
-  createDetachedArchetype,
-  type DetachedArchetype,
-  defaultBoidConfig,
-} from "./ecs/components"
+import { type BoidArchetype, createBoidArchetype, defaultBoidConfig } from "./ecs/components"
 import { type TransformReader, updateBoid } from "./ecs/systems/boidSystem"
 import { type Entity, World } from "./ecs/World"
 import type { Box, FlightZone } from "./FlightZone"
@@ -38,15 +32,11 @@ export class Simulation {
   boidConfig: Partial<BoidConfig> = {}
   private world: World = new World()
   readonly boids: BoidArchetype = createBoidArchetype()
-  // Boids removed on stop, still referenced by the spatial grid until cleared
-  private detachedBoids: DetachedArchetype = createDetachedArchetype()
   private transforms: TransformReader
 
   private spatialGrid: IncrementalSpatialGrid<Entity>
   private randomSeed: { value: number; remainingTicks: number } = { value: 1, remainingTicks: 0 }
   private isRunning: boolean = false
-
-  private nextDisplayId: number = 0
 
   constructor(simBox: Box, simulationConfig: Partial<SimulationConfig> = {}) {
     this.simBox = simBox
@@ -120,9 +110,7 @@ export class Simulation {
 
   removeBoids(count: number): void {
     if (this.boids.count <= count) {
-      this.despawnAll(this.boids)
-      this.despawnAll(this.detachedBoids) // No longer referenced by the spatial grid
-      this.spatialGrid.clear()
+      this.despawnAll()
       return // All boids were removed
     }
 
@@ -189,9 +177,6 @@ export class Simulation {
     const row = this.boids.count - 1
     const v = this.boids.views
 
-    this.boids.columns.displayId[row] = this.nextDisplayId
-    this.nextDisplayId++
-
     const theta = Math.random() * 2 * Math.PI
     vec3.copy(v.position[row], position)
     const velocity = vec3.set(v.velocity[row], Math.cos(theta) * 0.5, Math.sin(theta) * 0.5, Math.random() - 0.5)
@@ -202,16 +187,14 @@ export class Simulation {
 
   stop(): void {
     this.isRunning = false
-    // Detach boids: no longer simulated, but still referenced by the spatial grid
-    while (this.boids.count > 0) {
-      this.world.move(this.boids.entities[this.boids.count - 1], this.detachedBoids)
-    }
+    this.despawnAll()
     this.maxBoidCount = 0
   }
 
-  private despawnAll(archetype: BoidArchetype | DetachedArchetype): void {
-    while (archetype.count > 0) {
-      this.world.despawn(archetype.entities[archetype.count - 1])
+  private despawnAll(): void {
+    while (this.boids.count > 0) {
+      this.world.despawn(this.boids.entities[this.boids.count - 1])
     }
+    this.spatialGrid.clear()
   }
 }

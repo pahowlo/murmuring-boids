@@ -61,14 +61,6 @@ export class FlightZone {
   getPolygon(): Readonly<vec3[]> {
     return this.polygon
   }
-  setPolygon(polygonOnCanvas: vec2[] | vec3[]): void {
-    this.polygon = polygonOnCanvas.map((p) =>
-      vec3.fromValues(p[0] + this.canvasBox.start.x, p[1] + this.canvasBox.start.y, this.halfDepth),
-    )
-  }
-  resetPolygon(): void {
-    this.polygon = this.defaultPolygon()
-  }
 
   // Centroids
   getCentroids(): Readonly<vec3[]> {

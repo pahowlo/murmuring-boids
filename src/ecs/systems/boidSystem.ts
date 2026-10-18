@@ -18,7 +18,7 @@ export type BoidContext = {
   gravity: vec3
 }
 
-/** Read position/velocity of any positioned entity (incl. detached ones). */
+/** Read position/velocity of any positioned entity. */
 export type TransformReader = {
   position(entity: Entity): Readonly<vec3>
   velocity(entity: Entity): Readonly<vec3>

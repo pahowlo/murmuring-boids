@@ -5,13 +5,6 @@ import { Renderer } from "./Renderer"
 import { Simulation } from "./Simulation"
 import { FreqEstimator } from "./utilities/freqEstimator"
 
-type renderingTask = {
-  eTag: number // Too invalidate if no longer needed
-  endTime?: number
-  render?: () => void
-  endCallback?: () => void
-}
-
 export class Controller {
   private renderer: Renderer
   private flightZone: FlightZone
@@ -29,8 +22,6 @@ export class Controller {
   private isRunning = false
   private simulationLoopId?: number = undefined
   private renderingLoopId?: number = undefined
-
-  private renderingTasks: Map<string, renderingTask> = new Map()
 
   constructor(window: Window, canvas: HTMLCanvasElement, rendererConfig: Partial<RendererConfig> = {}) {
     this.renderer = new Renderer(window, canvas, rendererConfig)
@@ -123,23 +114,8 @@ export class Controller {
       this.renderer.drawStats(this.simulation.boidCount(), tps, this.TARGET_TPS)
     }
 
-    this.refreshRenderingTasks()
-
     // Request next frame
     this.renderingLoopId = requestAnimationFrame(this.renderingLoop.bind(this))
-  }
-
-  private refreshRenderingTasks(): void {
-    // Render active task
-    this.renderingTasks.forEach((task, key) => {
-      if (!task.render) return
-      if (task.endTime && performance.now() >= task.endTime) {
-        task.endCallback?.()
-        this.renderingTasks.set(key, { eTag: task.eTag })
-        return
-      }
-      task.render()
-    })
   }
 
   stop(): void {

@@ -23,7 +23,6 @@ export const Transform = {
 }
 
 export const BoidState = {
-  displayId: 1,
   acceleration: 3,
   isOutside: 1, // 0 | 1
   // lastPositionInside is undefined if hasLastPositionInside == 0
@@ -44,10 +43,4 @@ type BoidKey = TransformKey | keyof typeof BoidState
 export type BoidArchetype = Archetype<BoidKey>
 export function createBoidArchetype(): BoidArchetype {
   return new Archetype({ ...Transform, ...BoidState })
-}
-
-/** Boids removed from the simulation on stop, but still referenced by the spatial grid. */
-export type DetachedArchetype = Archetype<TransformKey>
-export function createDetachedArchetype(): DetachedArchetype {
-  return new Archetype(Transform)
 }

@@ -1,8 +1,7 @@
-import type { vec2, vec3 } from "gl-matrix"
+import type { vec3 } from "gl-matrix"
 
 import type { RendererConfig } from "./config"
 import { Box, type FlightZone } from "./FlightZone"
-import { HashPatternStyle } from "./utilities/canvas"
 
 export const defaultRendererConfig: RendererConfig = {
   clearCanvasIfResized: true,
@@ -36,8 +35,6 @@ export class Renderer {
   maxHeight: number
   private devicePixelRatio: number
   private screenHasTopLeft: boolean = false
-
-  private patternCache: { [name: string]: CanvasPattern } = {}
 
   constructor(window: Window, canvas: HTMLCanvasElement, rendererConfig: Partial<RendererConfig> = {}) {
     this.window = window
@@ -247,85 +244,6 @@ export class Renderer {
       ctx.arc(x, y, visibleRange, 0, 2 * Math.PI)
       ctx.stroke()
     }
-
-    ctx.restore()
-  }
-
-  drawDraftPolygon(
-    polygonOnCanvas: vec2[],
-    closed: boolean,
-    hexColor?: string,
-    remainingTime?: number,
-    blinkingFactor: number = 1,
-  ): void {
-    if (polygonOnCanvas.length === 0) return
-
-    const startX = 0 // No offset since polygon was drawn on canvas
-    const startY = 0
-
-    const ptRadius = 5
-
-    const ctx = this.renderingContext
-    ctx.save()
-
-    // Draw flight zone polygon
-    const color = hexColor || "#888888"
-    if (remainingTime != null) {
-      const alphaFactor = ((remainingTime / 500) * blinkingFactor) % 2
-      ctx.globalAlpha = alphaFactor > 1 ? 2 - alphaFactor : alphaFactor
-    }
-    ctx.lineWidth = 1
-    ctx.strokeStyle = color
-
-    let x = polygonOnCanvas[0][0] - startX
-    let y = polygonOnCanvas[0][1] - startY
-    ctx.beginPath()
-    ctx.arc(x, y, 10, 0, 2 * Math.PI)
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.moveTo(x - ptRadius, y)
-    ctx.lineTo(x + ptRadius, y)
-    ctx.moveTo(x, y - ptRadius)
-    ctx.lineTo(x, y + ptRadius)
-    ctx.stroke()
-
-    let fillStyle = this.patternCache.DraftPolygonFillStyle
-    if (!fillStyle) {
-      // 33 ~ 20% opacity in 255 hex
-      fillStyle = HashPatternStyle(color + "33", 8)
-      this.patternCache.DraftPolygonFillStyle = fillStyle
-    }
-    ctx.fillStyle = fillStyle
-    // Draw polygon
-    ctx.setLineDash([4, 4]) // dash, gap
-    ctx.beginPath()
-    ctx.moveTo(x, y)
-    for (let i = 1; i < polygonOnCanvas.length; i++) {
-      x = polygonOnCanvas[i][0] - startX
-      y = polygonOnCanvas[i][1] - startY
-      // Draw line to next point
-      ctx.lineTo(x, y)
-    }
-    if (closed) {
-      ctx.closePath()
-      ctx.fill("evenodd")
-    }
-    ctx.stroke()
-
-    // Draw vertices
-    ctx.setLineDash([]) // Solid line
-    ctx.beginPath()
-    ctx.moveTo(x, y)
-    for (let i = 1; i < polygonOnCanvas.length; i++) {
-      x = polygonOnCanvas[i][0] - startX
-      y = polygonOnCanvas[i][1] - startY
-      // Draw line to next point
-      ctx.moveTo(x - ptRadius, y)
-      ctx.lineTo(x + ptRadius, y)
-      ctx.moveTo(x, y - ptRadius)
-      ctx.lineTo(x, y + ptRadius)
-    }
-    ctx.stroke()
 
     ctx.restore()
   }

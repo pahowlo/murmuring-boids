@@ -48,14 +48,6 @@ export class Archetype<K extends string> {
     return row
   }
 
-  /** Copy components shared with source archetype. */
-  copyRowFrom(row: number, source: Archetype<string>, sourceRow: number): void {
-    for (const key in this.views) {
-      const sourceViews = source.views[key]
-      if (sourceViews) this.views[key][row].set(sourceViews[sourceRow])
-    }
-  }
-
   /** Swap-and-pop removal. Return the entity moved into `row`, if any. */
   removeRow(row: number): Entity | undefined {
     const last = this.count - 1
@@ -89,17 +81,6 @@ export class World {
     if (!location) return
     this.detach(location.archetype, location.row)
     this.locations.delete(entity)
-  }
-
-  /** Move entity to another archetype, copying the components both archetypes share. */
-  move(entity: Entity, target: Archetype<string>): void {
-    const location = this.locations.get(entity)
-    if (!location || location.archetype === target) return
-
-    const row = target.addRow(entity)
-    target.copyRowFrom(row, location.archetype, location.row)
-    this.detach(location.archetype, location.row)
-    this.locations.set(entity, { archetype: target, row })
   }
 
   /** Return location of entity. Throw if despawned. */
