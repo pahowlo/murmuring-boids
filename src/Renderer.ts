@@ -7,7 +7,7 @@ export const defaultRendererConfig: RendererConfig = {
   clearCanvasIfResized: true,
   boids: {
     lineWidth: 0.1,
-    sizeScreenHeightRatio: 0.003,
+    sizeScreenHeightRatio: 0.0015,
   },
   flightZone: {
     polygonColor: "#888888",

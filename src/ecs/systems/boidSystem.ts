@@ -116,7 +116,6 @@ export function updateBoid(
     const followDirection = vec3.zero(followCentroidsDirection)
     for (const point of centroids) {
       const vec = vec3.subtract(tmp, point, position)
-      vec[2] = 0 // Ignore in the case of centroids
       const manDist = Math.abs(vec[0]) + Math.abs(vec[1])
       if (manDist >= ctx.visibleDistance) {
         continue // Not visible

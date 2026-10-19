@@ -12,12 +12,12 @@ export const defaultSimulationConfig: SimulationConfig = {
   maxDepth: 500,
   visibleDistance: 500,
   grid: {
-    cellSize: { x: 12.5, y: 12.5, z: 12.5 },
-    neighborDistance: { min: 1, max: 8, limitCount: 20 },
+    cellSize: { x: 20, y: 20, z: 20 },
+    neighborDistance: { min: 1, max: 5, limitCount: 7 },
     closeNeighborDistance: {
       min: 0,
       max: 0,
-      limitCount: 3,
+      limitCount: 1,
     },
   },
 }

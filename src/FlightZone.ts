@@ -28,15 +28,15 @@ export class FlightZone {
 
   paddingRatio: number
   readonly maxDepth: number
-  readonly halfDepth: number
+  readonly centroidDepth: number
   private polygon: vec3[]
   private centroids: vec3[]
 
-  constructor(canvasBox: Box, maxDepth: number, paddingRatio: number = 0.25) {
+  constructor(canvasBox: Box, maxDepth: number, paddingRatio: number = 0.15) {
     this.canvasBox = canvasBox
     this.paddingRatio = paddingRatio
     this.maxDepth = maxDepth
-    this.halfDepth = maxDepth / 2
+    this.centroidDepth = maxDepth * 0.5
 
     this.polygon = this.defaultPolygon()
     this.centroids = []
@@ -47,13 +47,13 @@ export class FlightZone {
     const pad = Math.min(this.canvasBox.width * this.paddingRatio, this.canvasBox.height * this.paddingRatio)
     const defaultPolygon = [
       // left-top
-      vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.start.y + pad, this.halfDepth),
+      vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.start.y + pad, this.centroidDepth),
       // right-top
-      vec3.fromValues(this.canvasBox.end.x - pad, this.canvasBox.start.y + pad, this.halfDepth),
+      vec3.fromValues(this.canvasBox.end.x - pad, this.canvasBox.start.y + pad, this.centroidDepth),
       // right-bottom
-      vec3.fromValues(this.canvasBox.end.x - pad, this.canvasBox.end.y - pad, this.halfDepth),
+      vec3.fromValues(this.canvasBox.end.x - pad, this.canvasBox.end.y - pad, this.centroidDepth),
       // left-bottom
-      vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.end.y - pad, this.halfDepth),
+      vec3.fromValues(this.canvasBox.start.x + pad, this.canvasBox.end.y - pad, this.centroidDepth),
     ]
     return defaultPolygon
   }
@@ -70,7 +70,7 @@ export class FlightZone {
     const point = vec3.fromValues(
       pointOnCanvas[0] + this.canvasBox.start.x,
       pointOnCanvas[1] + this.canvasBox.start.y,
-      this.halfDepth,
+      this.centroidDepth,
     )
     this.centroids.push(point)
   }
