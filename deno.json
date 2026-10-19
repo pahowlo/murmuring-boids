@@ -13,10 +13,10 @@
 
   "tasks": {
     "setup": "git config core.hooksPath .githooks",
-    "clean": "deno task install:clean && deno task bundle:clean && deno task test:clean",
+    "clean": "deno task install:clean && deno task build:clean && deno task test:clean",
     "install:clean": "rm -rf node_modules/",
-    "bundle": "deno run --allow-read --allow-write --allow-run --allow-env .scripts/bundle.ts",
-    "bundle:clean": "rm -rf dist/ target/",
+    "build": "deno run --allow-read --allow-write --allow-run --allow-env .scripts/build.ts",
+    "build:clean": "rm -rf dist/ target/",
     "demo": "vite",
     "format": "biome format --write",
     "check": "(deno task check:lint || deno task format ) && deno task check:types",

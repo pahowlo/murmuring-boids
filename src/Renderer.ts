@@ -1,4 +1,4 @@
-import type { vec3 } from "gl-matrix"
+import { vec3 } from "gl-matrix"
 
 import type { RendererConfig } from "./config"
 import { Box, type FlightZone } from "./FlightZone"
@@ -256,6 +256,10 @@ export class Renderer {
 
     const boidSize = this.config.boids.sizeScreenHeightRatio * this.screenBox.height + depthRatio * 2 - 1
 
+    const speedXY = Math.sqrt(vel[0] * vel[0] + vel[1] * vel[1])
+    const speedTotal = vec3.length(vel)
+    const zScale = speedTotal > 1e-6 ? speedXY / speedTotal : 1
+
     const ctx = this.renderingContext
     ctx.save()
 
@@ -265,7 +269,7 @@ export class Renderer {
     ctx.beginPath()
     ctx.translate(pos[0] - startX, pos[1] - startY)
     ctx.rotate(Math.atan2(vel[1], vel[0]))
-    ctx.scale(boidSize, boidSize)
+    ctx.scale(boidSize * zScale, boidSize)
 
     const size = 1 // scaled by boidSize
     ctx.moveTo(-size * 0.5, size * 0.3)

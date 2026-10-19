@@ -10,8 +10,8 @@ export const defaultBoidConfig: BoidConfig = {
     stayCloseToCenterOwfMass: 0.05,
     followCentroids: 0.2,
     pullUpTerrain: 1,
-    cohesion: 0.3,
-    alignment: 0.5,
+    cohesion: 0.2,
+    alignment: 0.4,
     separation: 1,
   },
 }
