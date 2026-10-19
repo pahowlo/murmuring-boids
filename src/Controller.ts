@@ -43,7 +43,7 @@ export class Controller {
     if (this.isRunning) return
 
     this.isRunning = true
-    this.simulation.start(Math.floor(maxBoidCount * 0.7), boidConfig)
+    this.simulation.start(Math.floor(maxBoidCount * 0.1), boidConfig)
     this.simulationLoop()
     this.renderingLoop()
   }

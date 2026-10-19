@@ -9,32 +9,55 @@ interface ItemReader<T> {
   velocity(item: T): Readonly<vec3>
 }
 
+type CellKey = number
+
+export class Cell {
+  readonly size: vec3
+
+  constructor(size: { x: number; y: number; z: number }) {
+    this.size = vec3.fromValues(size.x, size.y, size.z)
+  }
+
+  encode(x: number, y: number, z: number): CellKey {
+    // 10 bits per axis (-512 to 511 range) packed into 30 bits
+    return ((x & 0x3ff) | ((y & 0x3ff) << 10) | ((z & 0x3ff) << 20)) as CellKey
+  }
+
+  decode(key: CellKey): [number, number, number] {
+    // Extract and sign-extend 10-bit integers using 22-bit shifts
+    return [((key & 0x3ff) << 22) >> 22, (((key >> 10) & 0x3ff) << 22) >> 22, (((key >> 20) & 0x3ff) << 22) >> 22]
+  }
+
+  getKey(pos: Readonly<vec3>): CellKey {
+    const x = Math.floor(pos[0] / this.size[0])
+    const y = Math.floor(pos[1] / this.size[1])
+    const z = Math.floor(pos[2] / this.size[2])
+    return this.encode(x, y, z)
+  }
+}
+
 // Main class
 export class IncrementalSpatialGrid<T> {
-  readonly cellSize: vec3
+  private cell: Cell
   readonly cellRadius: number
+
   centerOwMass: vec3 = vec3.fromValues(500, 500, 100)
   private centerOwMassAlpha: number
 
-  private grid: Map<string, T[]> = new Map()
-  private itemCellKeys: Map<T, string> = new Map()
+  private grid: Map<CellKey, T[]> = new Map()
+  private itemCellKeys: Map<T, CellKey> = new Map()
   private reader: ItemReader<T>
 
-  constructor(cellSize: { x: number; y: number }, maxItemCount: number, reader: ItemReader<T>) {
+  constructor(cellSize: { x: number; y: number; z: number }, maxItemCount: number, reader: ItemReader<T>) {
     this.reader = reader
-    this.cellSize = vec3.fromValues(cellSize.x, cellSize.y, 0)
-    this.cellRadius = Math.ceil(Math.sqrt((cellSize.x * cellSize.x + cellSize.y * cellSize.y) / 2))
+    this.cell = new Cell(cellSize)
+    this.cellRadius = Math.max(cellSize.x, cellSize.y, cellSize.z)
     this.centerOwMassAlpha = 2 / (maxItemCount + 1)
   }
 
   setMaxItemCount(value: number): void {
     this.centerOwMassAlpha = 2 / (value + 1)
   }
-
-  private getCellKey(pos: Readonly<vec3>): string {
-    return `${Math.floor(pos[0] / this.cellSize[0])},${Math.floor(pos[1] / this.cellSize[1])}`
-  }
-
   remove(item: T): void {
     const cellKey = this.itemCellKeys.get(item)
     if (!cellKey) return // Not found
@@ -45,7 +68,7 @@ export class IncrementalSpatialGrid<T> {
 
   update(item: T): void {
     const pos = this.reader.position(item)
-    const newCellKey = this.getCellKey(pos)
+    const newCellKey = this.cell.getKey(pos)
 
     const cellKey = this.itemCellKeys.get(item)
     if (cellKey === newCellKey) {
@@ -84,12 +107,12 @@ export class IncrementalSpatialGrid<T> {
     if (cellKeys.length === 0) return undefined
 
     const i = Math.floor(Math.random() * cellKeys.length)
-    const [cellX, cellY] = cellKeys[i].split(",").map(Number)
+    const [cellX, cellY] = this.cell.decode(cellKeys[i])
     return {
-      startX: cellX * this.cellSize[0],
-      startY: cellY * this.cellSize[1],
-      width: this.cellSize[0],
-      height: this.cellSize[1],
+      startX: cellX * this.cell.size[0],
+      startY: cellY * this.cell.size[1],
+      width: this.cell.size[0],
+      height: this.cell.size[1],
     }
   }
 
@@ -97,7 +120,7 @@ export class IncrementalSpatialGrid<T> {
    * Fetch all neighbors in the diamond-shaped area around the item of gridDistance length.
    */
   getNeighbors(item: T, gridDistance: { min: number; max: number; limitCount?: number }): T[] {
-    const cellKey = this.getCellKey(this.reader.position(item))
+    const cellKey = this.cell.getKey(this.reader.position(item))
 
     const neighbors: T[] = []
     let remainingCount = gridDistance.limitCount || 100
@@ -119,13 +142,13 @@ export class IncrementalSpatialGrid<T> {
       minGridDistance++
     }
 
-    const [centerX, centerY] = cellKey.split(",").map(Number)
+    const [centerX, centerY, centerZ] = this.cell.decode(cellKey)
 
     for (let radius = minGridDistance; radius <= gridDistance.max; radius++) {
       // Explore diamond shape by slowly increasing the radius
       const nextNeighbors = []
-      for (const { dx, dy } of this.diamondSpiralIterator(radius)) {
-        const neighborCell = this.grid.get(`${centerX + dx},${centerY + dy}`)
+      for (const [dx, dy, dz] of this.diamondSpiralIterator(radius)) {
+        const neighborCell = this.grid.get(this.cell.encode(centerX + dx, centerY + dy, centerZ + dz))
         if (!neighborCell) continue // Skip empty cells
 
         nextNeighbors.push(...neighborCell)
@@ -141,7 +164,7 @@ export class IncrementalSpatialGrid<T> {
     return neighbors
   }
 
-  private removeFromGrid(item: T, cellKey: string): void {
+  private removeFromGrid(item: T, cellKey: CellKey): void {
     const cell = this.grid.get(cellKey)
     if (!cell) return // Not found
 
@@ -158,32 +181,21 @@ export class IncrementalSpatialGrid<T> {
     cell.pop()
   }
 
-  private *diamondSpiralIterator(radius: number): IterableIterator<{ dx: number; dy: number }> {
-    let dx = radius
-    let dy = 0
-    yield { dx, dy }
+  private *diamondSpiralIterator(radius: number): IterableIterator<[number, number, number]> {
+    if (radius < 0) {
+      yield [0, 0, 0]
+      return
+    }
 
-    if (radius === 0) return // No need to iterate
-
-    while (dx > 0) {
-      dx--
-      dy++
-      yield { dx, dy }
-    }
-    while (dx > -radius) {
-      dx--
-      dy--
-      yield { dx, dy }
-    }
-    while (dx < 0) {
-      dx++
-      dy--
-      yield { dx, dy }
-    }
-    while (dx < radius) {
-      dx++
-      dy++
-      yield { dx, dy }
+    for (let dx = -radius; dx <= radius; dx++) {
+      const remX = radius - Math.abs(dx)
+      for (let dy = -remX; dy <= remX; dy++) {
+        const dz = remX - Math.abs(dy)
+        yield [dx, dy, dz]
+        if (dz !== 0) {
+          yield [dx, dy, -dz]
+        }
+      }
     }
   }
 }

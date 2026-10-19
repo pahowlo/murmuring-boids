@@ -2,17 +2,17 @@ import type { BoidConfig } from "../config"
 import { Archetype } from "./World"
 
 export const defaultBoidConfig: BoidConfig = {
-  minSpeed: 1,
+  minSpeed: 2,
   maxSpeed: 4,
-  maxTurnAngleDeg: 140,
+  maxTurnAngleDeg: 70,
   acceleration: {
-    backToFlightZone: 0.6,
-    stayCloseToCenterOwfMass: 0.1,
-    followCentroids: -2,
-    pullUpTerrain: 1.8,
-    cohesion: 0.4,
-    alignment: 1,
-    separation: 1.8,
+    backToFlightZone: 0.3,
+    stayCloseToCenterOwfMass: 0.05,
+    followCentroids: 0.2,
+    pullUpTerrain: 1,
+    cohesion: 0.3,
+    alignment: 0.5,
+    separation: 1,
   },
 }
 

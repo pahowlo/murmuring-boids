@@ -46,9 +46,8 @@ export interface SimulationConfig {
   gravity: number
   maxDepth: number
   visibleDistance: number
-  visibleDepth: number
   grid: {
-    cellSize: { x: number; y: number }
+    cellSize: { x: number; y: number; z: number }
     neighborDistance: gridDistance
     closeNeighborDistance: gridDistance
   }

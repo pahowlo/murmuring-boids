@@ -260,7 +260,7 @@ export class Renderer {
     ctx.save()
 
     ctx.lineWidth = this.config.boids.lineWidth
-    ctx.strokeStyle = `hsl(10, 10%, ${80 * depthRatio + 20}%)`
+    ctx.strokeStyle = `hsl(10, 10%, ${5 + 85 * depthRatio}%)`
 
     ctx.beginPath()
     ctx.translate(pos[0] - startX, pos[1] - startY)

@@ -13,7 +13,6 @@ export type BoidContext = {
   flightZone: FlightZone
   maxHeight: number
   visibleDistance: number
-  visibleDepth: number
   randomSeed: number
   gravity: vec3
 }
@@ -108,8 +107,6 @@ export function updateBoid(
       config.acceleration.backToFlightZone,
     )
     c.backToFlightZoneTicks[row]--
-    // Smoother U-turn when going back to the flight zone
-    maxTurnAngleDeg = Math.min(maxTurnAngleDeg, 90)
   }
 
   // Centroid attraction: Converge towards closest visible centroids if any
@@ -149,21 +146,14 @@ export function updateBoid(
   vec3.add(
     boidAcceleration,
     boidAcceleration,
-    alignmentAcceleration(position, neighbors, transforms, ctx.visibleDepth, config.acceleration.alignment),
+    alignmentAcceleration(neighbors, transforms, config.acceleration.alignment),
   )
 
   // Separation: Avoid collisions with neighbors
   vec3.add(
     boidAcceleration,
     boidAcceleration,
-    separationAcceleration(
-      position,
-      closeNeighbors,
-      transforms,
-      ctx.closeRadius,
-      ctx.visibleDepth,
-      config.acceleration.separation,
-    ),
+    separationAcceleration(position, closeNeighbors, transforms, ctx.closeRadius, config.acceleration.separation),
   )
 
   // == Environment
@@ -199,20 +189,9 @@ export function updateBoid(
  * Acceleration to match direction and speed of nearby neighbors.
  * To match velocity of the flock.
  */
-function alignmentAcceleration(
-  position: vec3,
-  neighbors: Entity[],
-  transforms: TransformReader,
-  visibleDepth: number,
-  factor: number,
-): vec3 {
+function alignmentAcceleration(neighbors: Entity[], transforms: TransformReader, factor: number): vec3 {
   const alignment = vec3.zero(sum)
   for (const neighbor of neighbors) {
-    const zDiff = Math.abs(transforms.position(neighbor)[2] - position[2])
-    if (zDiff > visibleDepth) {
-      // Ignore neighbors that are too far along z-axis
-      continue
-    }
     vec3.add(alignment, alignment, transforms.velocity(neighbor))
   }
   vec3.normalize(alignment, alignment)
@@ -248,24 +227,17 @@ function separationAcceleration(
   closeNeighbors: Entity[],
   transforms: TransformReader,
   closeRadius: number,
-  visibleDepth: number,
   factor: number,
 ): vec3 {
-  const visibleRadius = Math.max(closeRadius, visibleDepth)
-
   const separation = vec3.zero(sum)
   for (const neighbor of closeNeighbors) {
     const separationDir = vec3.subtract(tmp, position, transforms.position(neighbor))
-    if (Math.abs(separationDir[2]) > visibleDepth) {
-      // Ignore close neighbors that are too far along z-axis
-      continue
-    }
     let dist = vec3.length(separationDir)
     if (dist <= 1e-6) {
       dist = 10
       vec3.random(separationDir, dist)
     }
-    vec3.scaleAndAdd(separation, separation, separationDir, visibleRadius / dist - 1)
+    vec3.scaleAndAdd(separation, separation, separationDir, closeRadius / dist - 1)
   }
 
   vec3.normalize(separation, separation)

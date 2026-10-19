@@ -9,16 +9,15 @@ import { type CellCoords, IncrementalSpatialGrid } from "./utilities/spatialGrid
 
 export const defaultSimulationConfig: SimulationConfig = {
   gravity: 0.05,
-  maxDepth: 250,
-  visibleDistance: 100,
-  visibleDepth: 30,
+  maxDepth: 500,
+  visibleDistance: 500,
   grid: {
-    cellSize: { x: 10, y: 10 },
-    neighborDistance: { min: 1, max: 6, limitCount: 30 },
+    cellSize: { x: 10, y: 10, z: 25 },
+    neighborDistance: { min: 1, max: 6, limitCount: 20 },
     closeNeighborDistance: {
       min: 0,
       max: 0,
-      limitCount: 10,
+      limitCount: 3,
     },
   },
 }
@@ -139,7 +138,6 @@ export class Simulation {
       flightZone,
       maxHeight,
       visibleDistance: this.config.visibleDistance,
-      visibleDepth: this.config.visibleDepth,
       randomSeed: this.randomSeed.value,
       gravity,
     }
